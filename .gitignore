@@ -1,0 +1,53 @@
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+bin/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+
+# Virtual Environment
+venv/
+env/
+.env/
+.venv/
+ENV/
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Project specific
+dataset/
+data/raw/
+data/processed/
+*.rar
+*.zip
+*.tar.gz
+
+# Model files and checkpoints
+configs/model_configs/*.json
+*.h5
+*.pth
+*.ckpt
+*.pb
+model_checkpoints/
+saved_models/
+
+# Logs and local files
+*.log
+.DS_Store
+Thumbs.db
