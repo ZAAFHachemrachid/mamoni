@@ -1,8 +1,7 @@
 """
 Preview Module - Handles image preview functionality
 """
-import tkinter as tk
-from tkinter import ttk
+import customtkinter as ctk
 from PIL import Image, ImageTk
 
 # Constants
@@ -12,8 +11,22 @@ class ImagePreviewFrame:
     """Manages the preview of saved images"""
     def __init__(self, parent):
         self.parent = parent
-        self.preview_container = ttk.LabelFrame(parent, text="Last Saved Image")
-        self.preview_label = tk.Label(self.preview_container, bd=2, relief="groove")
+        self.preview_container = ctk.CTkFrame(parent)
+        
+        # Add title label to replace LabelFrame functionality
+        self.title_label = ctk.CTkLabel(
+            self.preview_container,
+            text="Last Saved Image",
+            font=ctk.CTkFont(weight="bold")
+        )
+        self.title_label.pack(padx=5, pady=(5, 0))
+        
+        # Preview label needs to remain tk.Label for PhotoImage compatibility
+        # But we'll style it to match customtkinter theme
+        self.preview_label = ctk.CTkLabel(
+            self.preview_container,
+            text=""  # Empty text as we'll use it for images
+        )
         self.photo_image = None
 
         # Layout
@@ -32,7 +45,8 @@ class ImagePreviewFrame:
         # Ensure image is correctly sized
         img_resized = img.resize((FINAL_SIZE, FINAL_SIZE), Image.LANCZOS)
         self.photo_image = ImageTk.PhotoImage(img_resized)
-        self.preview_label.config(image=self.photo_image)
+        self.preview_label._image = self.photo_image  # Store reference to prevent garbage collection
+        self.preview_label.configure(image=self.photo_image)
 
     def pack(self, **kwargs):
         """Pack the preview container with given options"""

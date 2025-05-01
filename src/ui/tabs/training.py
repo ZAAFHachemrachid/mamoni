@@ -1,8 +1,8 @@
 """
 Training Tab Module - Implements the neural network training interface
 """
-import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
+import customtkinter as ctk
+from tkinter import filedialog, messagebox
 import time
 import numpy as np
 
@@ -14,7 +14,7 @@ from visualization.plotnn import NeuralNetworkPlotter
 from ..tooltip import ToolTip
 from utils.progress import ProgressManager
 
-class NeuralNetworkAppTab(ttk.Frame):
+class NeuralNetworkAppTab(ctk.CTkFrame):
     """Neural Network Training Application as a Tab"""
 
     def __init__(self, parent):
@@ -24,17 +24,17 @@ class NeuralNetworkAppTab(ttk.Frame):
         self.controller = NeuralNetController(self.dataset)
         
         # Configuration variables
-        self.feature_method_var = tk.StringVar(value='average')
-        self.feature_size_var = tk.StringVar(value='5x5')
-        self.hidden_layers_var = tk.StringVar(value='64')
-        self.train_ratio_var = tk.DoubleVar(value=0.7)
-        self.val_ratio_var = tk.DoubleVar(value=0.15)
-        self.test_ratio_var = tk.DoubleVar(value=0.15)
-        self.dataset_path_var = tk.StringVar(value=r"D:\python\tp_nn_final_gui\MyData")
-        self.images_per_class_var = tk.StringVar(value="10")
-        self.epochs_var = tk.StringVar(value="20")
-        self.learning_rate_var = tk.StringVar(value="0.1")
-        self.batch_size_var = tk.StringVar(value="128")
+        self.feature_method_var = ctk.StringVar(value='average')
+        self.feature_size_var = ctk.StringVar(value='5x5')
+        self.hidden_layers_var = ctk.StringVar(value='64')
+        self.train_ratio_var = ctk.DoubleVar(value=0.7)
+        self.val_ratio_var = ctk.DoubleVar(value=0.15)
+        self.test_ratio_var = ctk.DoubleVar(value=0.15)
+        self.dataset_path_var = ctk.StringVar(value=r"D:\python\tp_nn_final_gui\MyData")
+        self.images_per_class_var = ctk.StringVar(value="10")
+        self.epochs_var = ctk.StringVar(value="20")
+        self.learning_rate_var = ctk.StringVar(value="0.1")
+        self.batch_size_var = ctk.StringVar(value="128")
 
         self._init_ui()
 
@@ -59,7 +59,7 @@ class NeuralNetworkAppTab(ttk.Frame):
 
     def _create_data_frame(self, parent):
         """Creates the Data Processing Frame."""
-        self.data_frame = ttk.Frame(parent, padding=10)
+        self.data_frame = ctk.CTkFrame(parent)
 
         # Heatmap Frame (inside Data Frame)
         heatmap_params = {'data_shape': (50, 50), 'cmap': 'gray', 'vmin': 0, 'vmax': 255, 'figsize': (3, 3)}
@@ -67,24 +67,24 @@ class NeuralNetworkAppTab(ttk.Frame):
         self.heatmap.canvas_widget.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
 
         # Dataset Path Frame
-        dataset_path_frame = ttk.Frame(self.data_frame)
+        dataset_path_frame = ctk.CTkFrame(self.data_frame)
         dataset_path_frame.grid(row=1, column=0, columnspan=2, sticky="ew", pady=5)
-        ttk.Label(dataset_path_frame, text="Dataset Path:").grid(row=0, column=0, sticky=tk.W, padx=5)
-        dataset_path_entry = ttk.Entry(dataset_path_frame, textvariable=self.dataset_path_var, width=30)
-        dataset_path_entry.grid(row=0, column=1, sticky=tk.EW, padx=5)
-        dataset_path_button = ttk.Button(dataset_path_frame, text="Browse", command=self._browse_dataset_path)
-        dataset_path_button.grid(row=0, column=2, sticky=tk.W, padx=5)
+        ctk.CTkLabel(dataset_path_frame, text="Dataset Path:").grid(row=0, column=0, sticky="w", padx=5)
+        dataset_path_entry = ctk.CTkEntry(dataset_path_frame, textvariable=self.dataset_path_var, width=250)
+        dataset_path_entry.grid(row=0, column=1, sticky="ew", padx=5)
+        dataset_path_button = ctk.CTkButton(dataset_path_frame, text="Browse", command=self._browse_dataset_path)
+        dataset_path_button.grid(row=0, column=2, sticky="w", padx=5)
 
         # Tooltips
         ToolTip(dataset_path_button, "Browse your dataset directory")
         ToolTip(dataset_path_entry, "Path to the dataset directory")
 
         # Images Per Class Frame
-        images_per_class_frame = ttk.Frame(self.data_frame)
+        images_per_class_frame = ctk.CTkFrame(self.data_frame)
         images_per_class_frame.grid(row=2, column=0, columnspan=2, sticky="ew", pady=5)
-        ttk.Label(images_per_class_frame, text="Images/Class:").grid(row=0, column=0, sticky=tk.W, padx=5)
-        images_per_class_entry = ttk.Entry(images_per_class_frame, textvariable=self.images_per_class_var, width=5)
-        images_per_class_entry.grid(row=0, column=1, sticky=tk.W, padx=5)
+        ctk.CTkLabel(images_per_class_frame, text="Images/Class:").grid(row=0, column=0, sticky="w", padx=5)
+        images_per_class_entry = ctk.CTkEntry(images_per_class_frame, textvariable=self.images_per_class_var, width=80)
+        images_per_class_entry.grid(row=0, column=1, sticky="w", padx=5)
         ToolTip(images_per_class_entry, "Max images to load per class")
 
         # Feature Method and Size Frames
@@ -92,13 +92,13 @@ class NeuralNetworkAppTab(ttk.Frame):
         self._create_feature_size_frame(self.data_frame, row_num=4)
 
         # Data Buttons Frame
-        data_buttons_frame = ttk.Frame(self.data_frame)
+        data_buttons_frame = ctk.CTkFrame(self.data_frame)
         data_buttons_frame.grid(row=5, column=0, columnspan=2, sticky="ew", pady=5)
         
-        self.load_dataset_button = ttk.Button(data_buttons_frame, text="Load Dataset", command=self._load_dataset)
+        self.load_dataset_button = ctk.CTkButton(data_buttons_frame, text="Load Dataset", command=self._load_dataset)
         self.load_dataset_button.grid(row=0, column=0, sticky="ew", padx=2, pady=5)
         
-        self.prepare_data_button = ttk.Button(data_buttons_frame, text="Prepare Data", command=self._prepare_data)
+        self.prepare_data_button = ctk.CTkButton(data_buttons_frame, text="Prepare Data", command=self._prepare_data)
         self.prepare_data_button.grid(row=0, column=1, sticky="ew", padx=2, pady=5)
         
         # Tooltips
@@ -109,7 +109,7 @@ class NeuralNetworkAppTab(ttk.Frame):
 
     def _create_train_frame(self, parent):
         """Creates the Training Frame."""
-        self.train_frame = ttk.Frame(parent, padding=10)
+        self.train_frame = ctk.CTkFrame(parent)
 
         # Metrics Plot Frame (inside Train Frame)
         self.metrics_plot = TrainingMetrics(self.train_frame)
@@ -121,7 +121,7 @@ class NeuralNetworkAppTab(ttk.Frame):
         self._create_training_params_frame(self.train_frame, row_num=3)
 
         # Training Buttons Frame
-        train_buttons_frame = ttk.Frame(self.train_frame)
+        train_buttons_frame = ctk.CTkFrame(self.train_frame)
         train_buttons_frame.grid(row=4, column=0, sticky="ew", pady=5)
         
         buttons = [
@@ -131,12 +131,12 @@ class NeuralNetworkAppTab(ttk.Frame):
         ]
         
         for i, (text, command) in enumerate(buttons):
-            btn = ttk.Button(train_buttons_frame, text=text, command=command)
+            btn = ctk.CTkButton(train_buttons_frame, text=text, command=command)
             btn.grid(row=0, column=i, sticky="ew", padx=2, pady=5)
             ToolTip(btn, f"{text}")
 
         # Model I/O Buttons Frame
-        model_io_frame = ttk.Frame(self.train_frame)
+        model_io_frame = ctk.CTkFrame(self.train_frame)
         model_io_frame.grid(row=5, column=0, sticky="ew", pady=5)
         
         io_buttons = [
@@ -146,7 +146,7 @@ class NeuralNetworkAppTab(ttk.Frame):
         ]
         
         for i, (text, command) in enumerate(io_buttons):
-            btn = ttk.Button(model_io_frame, text=text, command=command)
+            btn = ctk.CTkButton(model_io_frame, text=text, command=command)
             btn.grid(row=0, column=i, sticky="ew", padx=2)
             ToolTip(btn, f"{text}")
 
@@ -154,52 +154,55 @@ class NeuralNetworkAppTab(ttk.Frame):
 
     def _create_progress_frame(self):
         """Creates the Progress Bar Frame."""
-        self.progress_frame = ttk.Frame(self, padding=10)
-        self.progress_bar = ttk.Progressbar(self.progress_frame, orient=tk.HORIZONTAL, mode='determinate')
-        self.progress_bar.pack(fill=tk.X, pady=5)
-        self.progress_label = ttk.Label(self.progress_frame, text="")
+        self.progress_frame = ctk.CTkFrame(self)
+        self.progress_bar = ctk.CTkProgressBar(self.progress_frame)
+        self.progress_bar.pack(fill="x", pady=5)
+        self.progress_bar.set(0)  # Initialize progress to 0
+        self.progress_label = ctk.CTkLabel(self.progress_frame, text="")
         self.progress_label.pack(pady=5)
         self.progress_manager = ProgressManager(self.progress_bar, self.progress_label, self.root)
 
     def _create_feature_method_frame(self, parent_frame, row_num):
         """Creates the feature method selection frame."""
-        feature_method_frame = ttk.LabelFrame(parent_frame, text="Feature Method", padding=5)
+        feature_method_frame = ctk.CTkFrame(parent_frame)
         feature_method_frame.grid(row=row_num, column=0, columnspan=2, sticky="ew", pady=5)
+        ctk.CTkLabel(feature_method_frame, text="Feature Method:").grid(row=0, column=0, padx=5, pady=5)
 
         methods = ['average', 'sum', 'max']
         for i, method in enumerate(methods):
-            rb = ttk.Radiobutton(feature_method_frame, text=method.capitalize(),
+            rb = ctk.CTkRadioButton(feature_method_frame, text=method.capitalize(),
                                variable=self.feature_method_var, value=method)
-            rb.grid(row=0, column=i, padx=10, pady=5, sticky='w')
+            rb.grid(row=0, column=i+1, padx=10, pady=5)
             ToolTip(rb, f"Select {method.capitalize()} pooling")
 
     def _create_feature_size_frame(self, parent_frame, row_num):
         """Creates the feature size selection frame."""
-        feature_size_frame = ttk.LabelFrame(parent_frame, text="Feature Size", padding=5)
+        feature_size_frame = ctk.CTkFrame(parent_frame)
         feature_size_frame.grid(row=row_num, column=0, columnspan=2, sticky="ew", pady=5)
+        ctk.CTkLabel(feature_size_frame, text="Feature Size:").grid(row=0, column=0, padx=5, pady=5)
 
         sizes = ['5x5', '10x10', '25x25', '50x50 (No Prep)']
         for i, size in enumerate(sizes):
-            rb = ttk.Radiobutton(feature_size_frame, text=size,
+            rb = ctk.CTkRadioButton(feature_size_frame, text=size,
                                variable=self.feature_size_var, value=size)
-            rb.grid(row=0, column=i, padx=10, pady=5, sticky='w')
+            rb.grid(row=0, column=i+1, padx=10, pady=5)
             ToolTip(rb, f"Select feature size: {size}")
 
     def _create_hidden_layer_frame(self, parent_frame, row_num):
         """Creates the hidden layer size input frame."""
-        hidden_layer_frame = ttk.LabelFrame(parent_frame, text="Hidden Layers", padding=5)
+        hidden_layer_frame = ctk.CTkFrame(parent_frame)
         hidden_layer_frame.grid(row=row_num, column=0, sticky="ew", pady=5)
-
-        ttk.Label(hidden_layer_frame, text="Sizes (comma-separated):").grid(row=0, column=0, sticky=tk.W, padx=5)
-        hidden_layers_entry = ttk.Entry(hidden_layer_frame, textvariable=self.hidden_layers_var, width=30)
-        hidden_layers_entry.grid(row=0, column=1, sticky=tk.EW, padx=5, pady=5)
+        ctk.CTkLabel(hidden_layer_frame, text="Hidden Layer Sizes:").grid(row=0, column=0, sticky="w", padx=5)
+        hidden_layers_entry = ctk.CTkEntry(hidden_layer_frame, textvariable=self.hidden_layers_var, width=250)
+        hidden_layers_entry.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
         hidden_layer_frame.grid_columnconfigure(1, weight=1)
         ToolTip(hidden_layers_entry, "Hidden layer sizes, e.g., '64,32'")
 
     def _create_dataset_split_frame(self, parent_frame, row_num):
         """Creates the dataset split ratio frame."""
-        split_frame = ttk.LabelFrame(parent_frame, text="Dataset Split Ratios", padding=5)
+        split_frame = ctk.CTkFrame(parent_frame)
         split_frame.grid(row=row_num, column=0, sticky="ew", pady=5)
+        ctk.CTkLabel(split_frame, text="Dataset Split Ratios:").grid(row=0, column=0, columnspan=2, sticky="w", padx=5, pady=5)
 
         entries = [
             ("Train Ratio:", self.train_ratio_var, "Train dataset ratio (0.0-1.0)"),
@@ -208,9 +211,9 @@ class NeuralNetworkAppTab(ttk.Frame):
         ]
 
         for i, (label_text, var, tooltip_text) in enumerate(entries):
-            ttk.Label(split_frame, text=label_text).grid(row=i, column=0, sticky=tk.W, padx=5)
-            entry = ttk.Entry(split_frame, textvariable=var, width=5)
-            entry.grid(row=i, column=1, sticky="ew", padx=5)
+            ctk.CTkLabel(split_frame, text=label_text).grid(row=i+1, column=0, sticky="w", padx=5)
+            entry = ctk.CTkEntry(split_frame, textvariable=var, width=80)
+            entry.grid(row=i+1, column=1, sticky="w", padx=5)
             entry.bind("<FocusOut>", self._validate_and_normalize_ratios)
             ToolTip(entry, tooltip_text)
 
@@ -219,8 +222,9 @@ class NeuralNetworkAppTab(ttk.Frame):
 
     def _create_training_params_frame(self, parent_frame, row_num):
         """Create the training parameters section."""
-        training_params_frame = ttk.LabelFrame(parent_frame, text="Training Parameters", padding=5)
+        training_params_frame = ctk.CTkFrame(parent_frame)
         training_params_frame.grid(row=row_num, column=0, sticky="ew", pady=5)
+        ctk.CTkLabel(training_params_frame, text="Training Parameters:").grid(row=0, column=0, columnspan=6, sticky="w", padx=5, pady=5)
 
         params = [
             ("Epochs:", self.epochs_var, "Number of epochs"),
@@ -229,9 +233,9 @@ class NeuralNetworkAppTab(ttk.Frame):
         ]
 
         for i, (label_text, var, tooltip_text) in enumerate(params):
-            ttk.Label(training_params_frame, text=label_text).grid(row=0, column=i*2, sticky=tk.W, padx=5)
-            entry = ttk.Entry(training_params_frame, textvariable=var, width=5)
-            entry.grid(row=0, column=i*2+1, sticky=tk.W, padx=5)
+            ctk.CTkLabel(training_params_frame, text=label_text).grid(row=1, column=i*2, sticky="w", padx=5)
+            entry = ctk.CTkEntry(training_params_frame, textvariable=var, width=80)
+            entry.grid(row=1, column=i*2+1, sticky="w", padx=5)
             ToolTip(entry, tooltip_text)
 
     def _validate_and_normalize_ratios(self, event=None):
@@ -337,7 +341,7 @@ class NeuralNetworkAppTab(ttk.Frame):
 
             self.progress_manager.stop(text="Data Prepared and Split")
             messagebox.showinfo("Info", f"Dataset features prepared successfully using {feature_method.capitalize()} "
-                              f"method and feature size {feature_size_str}, and dataset split!")
+                            f"method and feature size {feature_size_str}, and dataset split!")
 
         except ValueError as e:
             self.progress_manager.stop(text="Preparation Failed")

@@ -24,6 +24,9 @@ class CanvasManager:
             parent, width=canvas_size, height=canvas_size,
             bg="white", bd=2, highlightthickness=2, highlightbackground="black"
         )
+        
+        # Make canvas focusable
+        self.canvas.config(takefocus=1)
 
         # Create PIL image and drawing context
         self.image = Image.new("L", (canvas_size, canvas_size), "white")
@@ -32,6 +35,11 @@ class CanvasManager:
         # Event bindings
         self.canvas.bind("<B1-Motion>", self.paint)
         self.canvas.bind("<Button-3>", self.delete_stroke)
+        self.canvas.bind("<Button-1>", lambda e: self.canvas.focus_set())
+        
+        # Change highlight color when focused
+        self.canvas.bind("<FocusIn>", lambda e: self.canvas.config(highlightbackground="blue"))
+        self.canvas.bind("<FocusOut>", lambda e: self.canvas.config(highlightbackground="black"))
 
     def paint(self, event):
         """Draw on canvas and update internal image"""
@@ -86,9 +94,13 @@ class CanvasManager:
     def undo(self):
         """Undo the last stroke"""
         if self.stroke_history:
-            _, _, _, _, _, oval_id = self.stroke_history.pop()
+            x1, y1, x2, y2, _, oval_id = self.stroke_history.pop()
             self.canvas.delete(oval_id)
-            self.redraw_image()
+            self.image = Image.new("L", (self.canvas_size, self.canvas_size), "white")
+            self.draw = ImageDraw.Draw(self.image)
+            for stroke in self.stroke_history:
+                x1, y1, x2, y2, _, _ = stroke
+                self.draw.ellipse([x1, y1, x2, y2], fill="black")
             self.update_bbox()
 
     def redraw_image(self):

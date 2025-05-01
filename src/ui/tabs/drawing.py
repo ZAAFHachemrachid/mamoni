@@ -1,7 +1,7 @@
 """
 Drawing Tab Module - Implements the drawing interface tab
 """
-import tkinter as tk
+import customtkinter as ctk
 from tkinter import messagebox
 import os
 
@@ -11,7 +11,7 @@ from core.controller import NeuralNetController
 from utils.file_manager import FileManager
 from utils.prediction import PredictionManager
 
-class DrawingAppTab(tk.Frame):
+class DrawingAppTab(ctk.CTkFrame):
     """Drawing App as a Tab"""
 
     def __init__(self, parent, nn_controller, nn_dataset):
@@ -21,11 +21,11 @@ class DrawingAppTab(tk.Frame):
         self.dataset = nn_dataset
 
         # Variables for canvas and UI control
-        self.brush_radius = tk.IntVar(value=15)
-        self.canvas_size = tk.IntVar(value=400)
-        self.filename_var = tk.StringVar()
-        self.auto_count = tk.BooleanVar()
-        self.start_number = tk.IntVar(value=1)
+        self.brush_radius = ctk.IntVar(value=15)
+        self.canvas_size = ctk.IntVar(value=400)
+        self.filename_var = ctk.StringVar()
+        self.auto_count = ctk.BooleanVar()
+        self.start_number = ctk.IntVar(value=1)
         self.prediction_label = None
 
         # Initialize FileManager for saving images
@@ -37,16 +37,16 @@ class DrawingAppTab(tk.Frame):
     def _create_layout(self):
         """Create the main layout"""
         # Left side - Canvas
-        canvas_frame = tk.Frame(self)
-        canvas_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=10)
+        canvas_frame = ctk.CTkFrame(self)
+        canvas_frame.pack(side="left", fill="both", expand=True, padx=10, pady=10)
 
         # Create canvas manager
         self.canvas_manager = CanvasManager(canvas_frame, self.canvas_size.get(), self.brush_radius)
         self.canvas_manager.canvas.pack(expand=True)
 
         # Right side - Controls
-        control_frame = tk.Frame(self)
-        control_frame.pack(side=tk.RIGHT, fill=tk.Y, padx=10, pady=10)
+        control_frame = ctk.CTkFrame(self)
+        control_frame.pack(side="right", fill="y", padx=10, pady=10)
 
         # Create control panel
         self.control_panel = ControlPanel(control_frame, self)
@@ -59,9 +59,15 @@ class DrawingAppTab(tk.Frame):
 
     def bind_keys(self):
         """Set up key bindings"""
-        self.bind_all('d', lambda e: self.undo())
-        self.bind_all('s', lambda e: self.save_image())
-        self.bind_all('r', lambda e: self.reset_canvas())
+        # Bind to the main frame
+        self.bind('<KeyPress-d>', lambda e: self.undo())
+        self.bind('<KeyPress-s>', lambda e: self.save_image())
+        self.bind('<KeyPress-r>', lambda e: self.reset_canvas())
+        
+        # Also bind to the canvas for better interaction
+        self.canvas_manager.canvas.bind('<KeyPress-d>', lambda e: self.undo())
+        self.canvas_manager.canvas.bind('<KeyPress-s>', lambda e: self.save_image())
+        self.canvas_manager.canvas.bind('<KeyPress-r>', lambda e: self.reset_canvas())
 
     def undo(self):
         """Undo last drawing action"""
@@ -102,7 +108,7 @@ class DrawingAppTab(tk.Frame):
             if hasattr(self, 'plotter') and self.plotter:
                 self.plotter.destroy()
             
-            self.plotter = tk.Toplevel(self)
+            self.plotter = ctk.CTkToplevel(self)
             self.plotter.title("Neural Network Preview")
             from visualization.plotnn import NetworkPlotter
             NetworkPlotter(self.plotter, self.controller.model)
