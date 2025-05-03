@@ -1,9 +1,11 @@
 import os
 import sys
 
-# Add project root to Python path
+# Add project root and src directory to Python path
 project_root = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(project_root)
+src_path = os.path.join(project_root, 'src')
+sys.path.insert(0, project_root)
+sys.path.insert(0, src_path)
 
 # Import and run main
 from src.main import main
