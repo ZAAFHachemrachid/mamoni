@@ -36,29 +36,35 @@ class DataPreparationTab(ctk.CTkFrame):
 
     def _init_ui(self):
         """Initialize the UI components"""
-        # Main Frame
-        self._create_data_frame()
-        self.data_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+        # Left sidebar for controls
+        self.controls_frame = ctk.CTkFrame(self)
+        self.controls_frame.grid(row=0, column=0, padx=5, pady=10, sticky="nsew")
         
-        # Progress Frame
+        # Right frame for visualization
+        self.viz_frame = ctk.CTkFrame(self)
+        self.viz_frame.grid(row=0, column=1, padx=5, pady=10, sticky="nsew")
+        
+        # Progress Frame at bottom
         self._create_progress_frame()
-        self.progress_frame.grid(row=1, column=0, sticky="ew", padx=10, pady=5)
+        self.progress_frame.grid(row=1, column=0, columnspan=2, sticky="ew", padx=10, pady=5)
         
         # Configure grid weights
-        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=3)  # Visualization takes more space
+        self.grid_columnconfigure(0, weight=1)  # Controls take less space
         self.grid_rowconfigure(0, weight=1)
 
-    def _create_data_frame(self):
-        """Creates the Data Processing Frame"""
-        self.data_frame = ctk.CTkFrame(self)
-        
-        # Heatmap visualization
-        heatmap_params = {'data_shape': (50, 50), 'cmap': 'gray', 'vmin': 0, 'vmax': 255, 'figsize': (3, 3)}
-        self.heatmap = AnimatedHeatmap(self.data_frame, params=heatmap_params)
-        self.heatmap.canvas_widget.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
-        
+        # Initialize visualization
+        heatmap_params = {'data_shape': (50, 50), 'cmap': 'gray', 'vmin': 0, 'vmax': 255, 'figsize': (5, 5)}
+        self.heatmap = AnimatedHeatmap(self.viz_frame, params=heatmap_params)
+        self.heatmap.canvas_widget.pack(expand=True, fill="both", padx=5, pady=5)
+
+        # Create control elements
+        self._create_control_elements()
+
+    def _create_control_elements(self):
+        """Creates all control elements in the left sidebar"""
         # Dataset Path Frame
-        dataset_path_frame = ctk.CTkFrame(self.data_frame)
+        dataset_path_frame = ctk.CTkFrame(self.controls_frame)
         dataset_path_frame.grid(row=1, column=0, sticky="ew", pady=5)
         ctk.CTkLabel(dataset_path_frame, text="Dataset Path:").grid(row=0, column=0, sticky="w", padx=5)
         dataset_path_entry = ctk.CTkEntry(dataset_path_frame, textvariable=self.dataset_path_var, width=250)
@@ -67,7 +73,7 @@ class DataPreparationTab(ctk.CTkFrame):
         dataset_path_button.grid(row=0, column=2, sticky="w", padx=5)
         
         # Images Per Class Frame
-        images_per_class_frame = ctk.CTkFrame(self.data_frame)
+        images_per_class_frame = ctk.CTkFrame(self.controls_frame)
         images_per_class_frame.grid(row=2, column=0, sticky="ew", pady=5)
         ctk.CTkLabel(images_per_class_frame, text="Images/Class:").grid(row=0, column=0, sticky="w", padx=5)
         images_per_class_entry = ctk.CTkEntry(images_per_class_frame, textvariable=self.images_per_class_var, width=80)
@@ -83,8 +89,8 @@ class DataPreparationTab(ctk.CTkFrame):
         self._create_dataset_split_frame(row_num=5)
         
         # Action Buttons Frame
-        action_buttons_frame = ctk.CTkFrame(self.data_frame)
-        action_buttons_frame.grid(row=6, column=0, sticky="ew", pady=5)
+        action_buttons_frame = ctk.CTkFrame(self.controls_frame)
+        action_buttons_frame.grid(row=6, column=0, sticky="ew", pady=10)
         
         self.load_dataset_button = ctk.CTkButton(action_buttons_frame, text="Load Dataset", command=self._load_dataset)
         self.load_dataset_button.grid(row=0, column=0, sticky="ew", padx=2, pady=5)
@@ -95,8 +101,7 @@ class DataPreparationTab(ctk.CTkFrame):
         self.export_features_button = ctk.CTkButton(action_buttons_frame, text="Export Features", command=self._export_features)
         self.export_features_button.grid(row=0, column=2, sticky="ew", padx=2, pady=5)
         
-        # Configure grid weights
-        self.data_frame.grid_columnconfigure(0, weight=1)
+        # Configure grid weights for action buttons
         action_buttons_frame.grid_columnconfigure((0,1,2), weight=1)
 
     def _create_progress_frame(self):
@@ -111,7 +116,7 @@ class DataPreparationTab(ctk.CTkFrame):
 
     def _create_feature_method_frame(self, row_num):
         """Creates the feature method selection frame"""
-        feature_method_frame = ctk.CTkFrame(self.data_frame)
+        feature_method_frame = ctk.CTkFrame(self.controls_frame)
         feature_method_frame.grid(row=row_num, column=0, sticky="ew", pady=5)
         ctk.CTkLabel(feature_method_frame, text="Feature Method:").grid(row=0, column=0, padx=5, pady=5)
         
@@ -124,7 +129,7 @@ class DataPreparationTab(ctk.CTkFrame):
 
     def _create_feature_size_frame(self, row_num):
         """Creates the feature size selection frame"""
-        feature_size_frame = ctk.CTkFrame(self.data_frame)
+        feature_size_frame = ctk.CTkFrame(self.controls_frame)
         feature_size_frame.grid(row=row_num, column=0, sticky="ew", pady=5)
         ctk.CTkLabel(feature_size_frame, text="Feature Size:").grid(row=0, column=0, padx=5, pady=5)
         
@@ -137,7 +142,7 @@ class DataPreparationTab(ctk.CTkFrame):
 
     def _create_dataset_split_frame(self, row_num):
         """Creates the dataset split ratio frame"""
-        split_frame = ctk.CTkFrame(self.data_frame)
+        split_frame = ctk.CTkFrame(self.controls_frame)
         split_frame.grid(row=row_num, column=0, sticky="ew", pady=5)
         ctk.CTkLabel(split_frame, text="Dataset Split Ratios:").grid(row=0, column=0, columnspan=2, sticky="w", padx=5, pady=5)
         

@@ -31,35 +31,43 @@ class TrainingTab(ctk.CTkFrame):
 
     def _init_ui(self):
         """Initialize all UI components."""
-        # Train Frame
-        self._create_train_frame()
-        self.train_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
-
+        # Left sidebar for controls
+        self.controls_frame = ctk.CTkFrame(self)
+        self.controls_frame.grid(row=0, column=0, padx=5, pady=10, sticky="nsew")
+        
+        # Right frame for visualization
+        self.viz_frame = ctk.CTkFrame(self)
+        self.viz_frame.grid(row=0, column=1, padx=5, pady=10, sticky="nsew")
+        
         # Progress Frame
         self._create_progress_frame()
-        self.progress_frame.grid(row=1, column=0, sticky="ew", padx=10, pady=5)
-
+        self.progress_frame.grid(row=1, column=0, columnspan=2, sticky="ew", padx=10, pady=5)
+        
         # Configure grid weights for resizing
-        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=3)  # Visualization takes more space
+        self.grid_columnconfigure(0, weight=1)  # Controls take less space
         self.grid_rowconfigure(0, weight=1)
+        
+        # Create the content
+        self._create_visualization_frame()
+        self._create_controls_frame()
 
-    def _create_train_frame(self):
-        """Creates the Training Frame."""
-        self.train_frame = ctk.CTkFrame(self)
-
-        # Metrics Plot Frame
-        self.metrics_plot = TrainingMetrics(self.train_frame)
-        self.metrics_plot.canvas_widget.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
-
+    def _create_visualization_frame(self):
+        """Creates the visualization area with metrics plot"""
+        self.metrics_plot = TrainingMetrics(self.viz_frame)
+        self.metrics_plot.canvas_widget.pack(expand=True, fill="both", padx=5, pady=5)
+        
+    def _create_controls_frame(self):
+        """Creates all control elements in the left sidebar"""
         # Hidden Layer Frame
-        self._create_hidden_layer_frame(row_num=1)
+        self._create_hidden_layer_frame()
         
         # Training Parameters Frame
-        self._create_training_params_frame(row_num=2)
+        self._create_training_params_frame()
 
         # Training Buttons Frame
-        train_buttons_frame = ctk.CTkFrame(self.train_frame)
-        train_buttons_frame.grid(row=3, column=0, sticky="ew", pady=5)
+        train_buttons_frame = ctk.CTkFrame(self.controls_frame)
+        train_buttons_frame.pack(fill="x", padx=5, pady=5)
         
         buttons = [
             ("Create Model", self._create_model),
@@ -67,24 +75,22 @@ class TrainingTab(ctk.CTkFrame):
             ("Test Model", self._test_model)
         ]
         
-        for i, (text, command) in enumerate(buttons):
+        for text, command in buttons:
             btn = ctk.CTkButton(train_buttons_frame, text=text, command=command)
-            btn.grid(row=0, column=i, sticky="ew", padx=2, pady=5)
+            btn.pack(fill="x", padx=2, pady=2)
 
         # Model I/O Buttons Frame
-        model_io_frame = ctk.CTkFrame(self.train_frame)
-        model_io_frame.grid(row=4, column=0, sticky="ew", pady=5)
+        model_io_frame = ctk.CTkFrame(self.controls_frame)
+        model_io_frame.pack(fill="x", padx=5, pady=5)
         
         io_buttons = [
             ("Save Model", self._save_model),
             ("Load Model", self._load_model)
         ]
         
-        for i, (text, command) in enumerate(io_buttons):
+        for text, command in io_buttons:
             btn = ctk.CTkButton(model_io_frame, text=text, command=command)
-            btn.grid(row=0, column=i, sticky="ew", padx=2)
-
-        self.train_frame.grid_columnconfigure(0, weight=1)
+            btn.pack(fill="x", padx=2, pady=2)
 
     def _create_progress_frame(self):
         """Creates the Progress Bar Frame."""
@@ -96,19 +102,19 @@ class TrainingTab(ctk.CTkFrame):
         self.progress_label.pack(pady=5)
         self.progress_manager = ProgressManager(self.progress_bar, self.progress_label, self.root)
 
-    def _create_hidden_layer_frame(self, row_num):
+    def _create_hidden_layer_frame(self):
         """Creates the hidden layer size input frame."""
-        hidden_layer_frame = ctk.CTkFrame(self.train_frame)
-        hidden_layer_frame.grid(row=row_num, column=0, sticky="ew", pady=5)
+        hidden_layer_frame = ctk.CTkFrame(self.controls_frame)
+        hidden_layer_frame.pack(fill="x", padx=5, pady=5)
         ctk.CTkLabel(hidden_layer_frame, text="Hidden Layer Sizes:").grid(row=0, column=0, sticky="w", padx=5)
         hidden_layers_entry = ctk.CTkEntry(hidden_layer_frame, textvariable=self.hidden_layers_var, width=250)
         hidden_layers_entry.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
         hidden_layer_frame.grid_columnconfigure(1, weight=1)
 
-    def _create_training_params_frame(self, row_num):
+    def _create_training_params_frame(self):
         """Create the training parameters section."""
-        training_params_frame = ctk.CTkFrame(self.train_frame)
-        training_params_frame.grid(row=row_num, column=0, sticky="ew", pady=5)
+        training_params_frame = ctk.CTkFrame(self.controls_frame)
+        training_params_frame.pack(fill="x", padx=5, pady=5)
         ctk.CTkLabel(training_params_frame, text="Training Parameters:").grid(row=0, column=0, columnspan=6, sticky="w", padx=5, pady=5)
 
         params = [
