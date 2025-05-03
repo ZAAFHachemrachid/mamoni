@@ -10,8 +10,7 @@ from tkinter import ttk
 import json
 import os
 
-from ui.tabs.drawing import DrawingAppTab
-from ui.tabs.training import NeuralNetworkAppTab
+from ui.tabs import TAB_ORDER, DataPreparationTab, TrainingTab, PredictionTab
 
 class MergedApp(ctk.CTk):
     """Main application class that manages the tab-based interface."""
@@ -45,33 +44,56 @@ class MergedApp(ctk.CTk):
         self.tabview = ctk.CTkTabview(self)
         self.tabview.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
 
-        # Create Neural Network Tab
-        self.nn_tab = self.tabview.add("Neural Network Trainer")
-        self.nn_tab.grid_columnconfigure(0, weight=1)
-        self.nn_tab.grid_rowconfigure(0, weight=1)
-        self.nn_app_tab = NeuralNetworkAppTab(self.nn_tab)
-        self.nn_app_tab.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
-
-        # Create Drawing Tab
-        self.drawing_tab = self.tabview.add("Drawing App")
-        self.drawing_tab.grid_columnconfigure(0, weight=1)
-        self.drawing_tab.grid_rowconfigure(0, weight=1)
-        self.drawing_app_tab = DrawingAppTab(self.drawing_tab, self.nn_app_tab.controller, self.nn_app_tab.dataset)
-        self.drawing_app_tab.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
-
-        # Setup keyboard shortcuts for Drawing Tab
-        for char, command in {
-            's': self.drawing_app_tab.save_image,
-            'r': self.drawing_app_tab.reset_canvas,
-            'd': self.drawing_app_tab.undo
-        }.items():
-            self.bind(f'<{char}>', lambda event, cmd=command: cmd())
+        # Initialize tabs based on TAB_ORDER
+        self.tabs = {}
+        self.tab_instances = {}
         
+        # Create tabs according to defined order
+        for tab_class in TAB_ORDER:
+            tab_name = tab_class.__name__.replace('Tab', '')
+            self.tabs[tab_name] = self.tabview.add(tab_name)
+            self.tabs[tab_name].grid_columnconfigure(0, weight=1)
+            self.tabs[tab_name].grid_rowconfigure(0, weight=1)
+
+        # Initialize tabs in the correct order with proper dependencies
+        for tab_class in TAB_ORDER:
+            tab_name = tab_class.__name__.replace('Tab', '')
+            
+            # Data Preparation Tab - initialized first
+            if tab_class == DataPreparationTab:
+                data_prep_tab = DataPreparationTab(self.tabs[tab_name])
+                data_prep_tab.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+                self.tab_instances[tab_name] = data_prep_tab
+            
+            # Training Tab - depends on data_prep_tab
+            elif tab_class == TrainingTab:
+                training_tab = TrainingTab(self.tabs[tab_name], data_prep_tab)
+                training_tab.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+                self.tab_instances[tab_name] = training_tab
+            
+            # Prediction Tab - depends on controller and dataset
+            elif tab_class == PredictionTab:
+                prediction_tab = PredictionTab(
+                    self.tabs[tab_name],
+                    training_tab.controller,
+                    data_prep_tab.get_dataset()
+                )
+                prediction_tab.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+                self.tab_instances[tab_name] = prediction_tab
+
         # Configure tab change callback
         self.tabview.configure(command=self.on_tab_changed)
         
         # Set initial tab
-        self.tabview.set("Neural Network Trainer")
+        self.tabview.set("DataPreparation")
+
+        # Setup keyboard shortcuts
+        self.setup_keyboard_shortcuts()
+
+    def setup_keyboard_shortcuts(self):
+        """Setup global keyboard shortcuts."""
+        # No shortcuts needed for now
+        self.drawing_shortcuts = {}
 
     def load_theme_preference(self):
         """Load saved theme preference or use system default."""
@@ -105,13 +127,10 @@ class MergedApp(ctk.CTk):
         current_tab = self.tabview.get()
 
         # Unbind existing shortcuts
-        for char in ['s', 'r', 'd']:
+        for char in self.drawing_shortcuts:
             self.unbind(f'<{char}>')
 
-        if current_tab == 'Drawing App':
-            for char, command in {
-                's': self.drawing_app_tab.save_image,
-                'r': self.drawing_app_tab.reset_canvas,
-                'd': self.drawing_app_tab.undo
-            }.items():
+        # Rebind shortcuts if on Drawing tab
+        if current_tab == 'Drawing':
+            for char, command in self.drawing_shortcuts.items():
                 self.bind(f'<{char}>', lambda event, cmd=command: cmd())

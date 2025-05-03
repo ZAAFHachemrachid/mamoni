@@ -4,7 +4,7 @@ Prediction Tab Module - Implements the dedicated prediction interface
 import customtkinter as ctk
 from PIL import Image
 import numpy as np
-from ..preview import PreviewWidget
+from ..preview import ImagePreviewFrame
 from utils.prediction import PredictionManager
 
 class PredictionTab(ctk.CTkFrame):
@@ -37,7 +37,7 @@ class PredictionTab(ctk.CTkFrame):
         preview_label = ctk.CTkLabel(left_frame, text="Current Image")
         preview_label.grid(row=0, column=0, padx=5, pady=5)
         
-        self.preview = PreviewWidget(left_frame, "Current Image", size=200)
+        self.preview = ImagePreviewFrame(left_frame)
         self.preview.grid(row=1, column=0, padx=5, pady=5)
         
         # History section
@@ -107,7 +107,7 @@ class PredictionTab(ctk.CTkFrame):
             frame.grid(row=i, column=0, padx=5, pady=2, sticky="ew")
             
             # Create mini preview of the image
-            preview = PreviewWidget(frame, "", size=50)
+            preview = ImagePreviewFrame(frame)
             preview.grid(row=0, column=0, padx=2, pady=2)
             preview.display_image(item['image'])
             
