@@ -7,6 +7,7 @@ Handles all data loading and preparation functionality including:
 - Feature extraction 
 - Dataset splitting
 """
+import os
 import numpy as np
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
@@ -201,6 +202,22 @@ class DataPreparationTab(ctk.CTkFrame):
         if not root_dir:
             messagebox.showerror("Error", "Dataset path is required.")
             return
+        
+        # Pre-validate directory structure
+        train_dir = os.path.join(root_dir, 'train')
+        if not os.path.exists(root_dir):
+            messagebox.showerror("Error", f"Dataset directory not found: {root_dir}")
+            return
+        if not os.path.isdir(train_dir):
+            messagebox.showerror("Error",
+                             "Invalid dataset structure!\n\n"
+                             "Expected structure:\n"
+                             "selected_directory/\n"
+                             "└── train/\n"
+                             "    ├── 0/\n"
+                             "    ├── 1/\n"
+                             "    └── .../")
+            return
             
         try:
             max_num_img_per_label = int(self.images_per_class_var.get())
@@ -208,7 +225,7 @@ class DataPreparationTab(ctk.CTkFrame):
                 messagebox.showerror("Error", "Images per class must be positive.")
                 return
                 
-            self.progress_manager.start(mode='indeterminate', text="Loading Dataset...")
+            self.progress_manager.start(mode='indeterminate', text="Validating and Loading Dataset...")
             self.dataset.load_dataset(
                 root_dir,
                 max_num_img_per_label,
@@ -217,16 +234,24 @@ class DataPreparationTab(ctk.CTkFrame):
             )
             self.progress_manager.stop(text="Dataset Loaded")
             messagebox.showinfo("Info", "Dataset loaded and cropped successfully!")
+            # Notify training tab to refresh dataset
+            self.root.nametowidget(".!notebook.!trainingtab").refresh_dataset()
             
         except ValueError:
             self.progress_manager.stop(text="Load Failed")
             messagebox.showerror("Error", "Invalid Images per Class value.")
         except FileNotFoundError:
             self.progress_manager.stop(text="Load Failed")
-            messagebox.showerror("Error", "Dataset directory not found.")
+            messagebox.showerror("Error", str(e))
         except Exception as e:
             self.progress_manager.stop(text="Load Failed")
-            messagebox.showerror("Error", f"Dataset loading error: {e}")
+            messagebox.showerror("Error",
+                             "Dataset Loading Error\n\n"
+                             f"Details: {str(e)}\n\n"
+                             "Please ensure:\n"
+                             "1. The selected directory contains a 'train' folder\n"
+                             "2. The 'train' folder contains numbered subdirectories (0,1,2,...)\n"
+                             "3. Each numbered directory contains valid image files")
 
     def _prepare_data(self):
         """Prepare features from the loaded dataset and split dataset"""
@@ -263,6 +288,8 @@ class DataPreparationTab(ctk.CTkFrame):
             self.dataset.split_dataset(train_ratio, val_ratio, test_ratio)
             
             self.progress_manager.stop(text="Data Prepared and Split")
+            # Notify training tab to refresh dataset
+            self.root.nametowidget(".!notebook.!trainingtab").refresh_dataset()
             messagebox.showinfo("Info", f"Dataset features prepared successfully using {feature_method.capitalize()} "
                               f"method and feature size {feature_size_str}, and dataset split!")
                               

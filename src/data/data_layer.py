@@ -2,6 +2,11 @@ import os
 import numpy as np
 import csv
 from PIL import Image
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 # ======================================
 # Data Layer
 # ======================================
@@ -57,54 +62,120 @@ class ImageDataset:
 
     def load_dataset(self, root_dir, max_num_img_per_label, progress_callback=None, heatmap_callback=None):
         """Load images from directory structure and preprocess them."""
-        self.images, self.labels, self.processed_images = [], [], []
-        self.features, self.encoded_labels = None, None
-        self.num_classes = 0
+        try:
+            self.images, self.labels, self.processed_images = [], [], []
+            self.features, self.encoded_labels = None, None
+            self.num_classes = 0
 
-        dataset_dir = os.path.join(root_dir, 'train')
-        if not os.path.isdir(dataset_dir):
-            raise FileNotFoundError(f"Directory not found: {dataset_dir}")
+            # Convert relative path to absolute for better error reporting
+            root_dir = os.path.abspath(root_dir)
+            dataset_dir = os.path.join(root_dir, 'train')
+            
+            logger.info(f"Attempting to load dataset from: {dataset_dir}")
 
-        unique_labels = set()
-        label_dirs = sorted(d for d in os.listdir(dataset_dir)
-                           if os.path.isdir(os.path.join(dataset_dir, d))
-                           and d.isdigit())
+            # Validate directory structure
+            if not os.path.exists(root_dir):
+                raise FileNotFoundError(f"Dataset root directory not found: {root_dir}")
+            
+            if not os.path.isdir(dataset_dir):
+                raise FileNotFoundError(
+                    f"Invalid dataset structure: 'train' subdirectory not found in {root_dir}.\n"
+                    f"Expected structure:\n"
+                    f"{root_dir}/\n"
+                    f"└── train/\n"
+                    f"    ├── 0/\n"
+                    f"    ├── 1/\n"
+                    f"    └── .../")
 
-        total_images_to_load = sum(min(max_num_img_per_label,
-                                       len(os.listdir(os.path.join(dataset_dir, label))))
-                                  if max_num_img_per_label else
-                                  len(os.listdir(os.path.join(dataset_dir, label)))
-                                  for label in label_dirs)
+            # Get and validate label directories
+            all_items = os.listdir(dataset_dir)
+            logger.debug(f"Found items in train directory: {all_items}")
+            
+            label_dirs = []
+            for d in sorted(all_items):
+                full_path = os.path.join(dataset_dir, d)
+                if not os.path.isdir(full_path):
+                    logger.warning(f"Skipping non-directory item: {d}")
+                    continue
+                if not d.isdigit():
+                    logger.warning(f"Skipping invalid label directory (not a number): {d}")
+                    continue
+                if d.startswith('!'):
+                    logger.error(f"Invalid directory name (starts with '!'): {d}")
+                    raise ValueError(f"Invalid directory name found: {d}. Directory names must be numbers only.")
+                label_dirs.append(d)
 
-        loaded_images_count = 0
+            if not label_dirs:
+                raise ValueError(
+                    f"No valid label directories found in {dataset_dir}.\n"
+                    f"Each label directory must be a number (0, 1, 2, etc).")
 
-        for label in label_dirs:
-            numeric_label = int(label)
-            unique_labels.add(numeric_label)
-            img_files = sorted(os.listdir(os.path.join(dataset_dir, label)))[:max_num_img_per_label] if max_num_img_per_label else sorted(os.listdir(os.path.join(dataset_dir, label)))
-
-            print(f"Loading {len(img_files)}/{len(os.listdir(os.path.join(dataset_dir, label)))} images for label '{numeric_label}'.")
-
-            for img_file in img_files:
+            # Calculate total images to load
+            total_images_to_load = 0
+            for label in label_dirs:
+                label_path = os.path.join(dataset_dir, label)
                 try:
-                    img_array = np.array(Image.open(os.path.join(dataset_dir, label, img_file)).convert('L'))
-                    self.images.append(img_array)
-                    self.labels.append(numeric_label)
-
-                    processed_image = self.crop_and_resize_image(img_array)
-                    self.processed_images.append(processed_image)
-                    if heatmap_callback:
-                        heatmap_callback(processed_image)
-
-                    loaded_images_count += 1
-                    if progress_callback:
-                        progress_callback(loaded_images_count, total_images_to_load,
-                                         f"Loading images: {loaded_images_count}/{total_images_to_load}")
+                    img_files = os.listdir(label_path)
+                    count = min(max_num_img_per_label, len(img_files)) if max_num_img_per_label else len(img_files)
+                    total_images_to_load += count
+                except PermissionError as e:
+                    logger.error(f"Permission denied accessing directory: {label_path}")
+                    raise PermissionError(f"Cannot access directory {label_path}. Please check file permissions.") from e
                 except Exception as e:
-                    print(f"Error loading {img_file}: {e}")
+                    logger.error(f"Error accessing directory {label_path}: {str(e)}")
+                    raise
 
-        self.num_classes = len(unique_labels)
-        print(f"Loaded and processed {len(self.images)} images from '{dataset_dir}'.")
+            loaded_images_count = 0
+            unique_labels = set()
+
+            for label in label_dirs:
+                numeric_label = int(label)
+                unique_labels.add(numeric_label)
+                label_path = os.path.join(dataset_dir, label)
+                
+                try:
+                    img_files = sorted(os.listdir(label_path))
+                    if max_num_img_per_label:
+                        img_files = img_files[:max_num_img_per_label]
+                    
+                    logger.info(f"Loading {len(img_files)}/{len(os.listdir(label_path))} images for label '{numeric_label}'.")
+
+                    for img_file in img_files:
+                        try:
+                            img_path = os.path.join(label_path, img_file)
+                            logger.debug(f"Loading image: {img_path}")
+                            
+                            img_array = np.array(Image.open(img_path).convert('L'))
+                            self.images.append(img_array)
+                            self.labels.append(numeric_label)
+
+                            processed_image = self.crop_and_resize_image(img_array)
+                            if processed_image is None:
+                                logger.warning(f"Failed to process image {img_path} - empty content")
+                                continue
+                                
+                            self.processed_images.append(processed_image)
+                            if heatmap_callback:
+                                heatmap_callback(processed_image)
+
+                            loaded_images_count += 1
+                            if progress_callback:
+                                progress_callback(loaded_images_count, total_images_to_load,
+                                             f"Loading images: {loaded_images_count}/{total_images_to_load}")
+                        except Exception as e:
+                            logger.error(f"Error loading {img_file}: {str(e)}")
+                            continue
+
+                except Exception as e:
+                    logger.error(f"Error processing label directory {label}: {str(e)}")
+                    raise
+
+            self.num_classes = len(unique_labels)
+            logger.info(f"Successfully loaded and processed {len(self.images)} images from '{dataset_dir}'.")
+
+        except Exception as e:
+            logger.error(f"Dataset loading failed: {str(e)}")
+            raise
 
     def prepare_features(self, progress_callback=None, heatmap_callback=None, feature_method='average', feature_size=(5, 5)):
         """Extract features from processed images for neural network training."""

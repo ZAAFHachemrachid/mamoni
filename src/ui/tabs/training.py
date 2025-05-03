@@ -29,6 +29,11 @@ class TrainingTab(ctk.CTkFrame):
 
         self._init_ui()
 
+    def refresh_dataset(self):
+        """Refresh the dataset reference from data preparation tab"""
+        self.dataset = self.data_prep_tab.get_dataset()
+        self.controller.dataset = self.dataset
+
     def _init_ui(self):
         """Initialize all UI components."""
         # Left sidebar for controls
