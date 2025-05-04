@@ -5,11 +5,11 @@ import customtkinter as ctk
 from tkinter import messagebox
 import os
 
-from ..canvas import CanvasManager
-from ..controls import ControlPanel
-from core.controller import NeuralNetController
-from utils.file_manager import FileManager
-from utils.prediction import PredictionManager
+from src.ui.canvas import CanvasManager
+from src.ui.controls import ControlPanel
+from src.core.controller import NeuralNetController
+from src.utils.file_manager import FileManager
+from src.utils.prediction import PredictionManager
 
 class DrawingAppTab(ctk.CTkFrame):
     """Drawing App as a Tab"""
@@ -110,7 +110,7 @@ class DrawingAppTab(ctk.CTkFrame):
             
             self.plotter = ctk.CTkToplevel(self)
             self.plotter.title("Neural Network Preview")
-            from visualization.plotnn import NetworkPlotter
+            from src.visualization.plotnn import NetworkPlotter
             NetworkPlotter(self.plotter, self.controller.model)
         else:
             messagebox.showerror("Error", "No model loaded")

@@ -3,6 +3,7 @@ Canvas Manager Module - Handles drawing canvas operations
 """
 import tkinter as tk
 from PIL import Image, ImageDraw, ImageOps
+from typing import Callable, Optional, Tuple
 
 # Constants
 DEFAULT_CANVAS_SIZE = 400
@@ -18,7 +19,11 @@ class CanvasManager:
         self.stroke_history = []
         self.bbox_id = None
         self.bbox_coords = None
-
+        self.drawing = False
+        self.last_x = None
+        self.last_y = None
+        self.stroke_callback: Optional[Callable[[Image.Image], None]] = None
+        
         # Create the canvas
         self.canvas = tk.Canvas(
             parent, width=canvas_size, height=canvas_size,
@@ -33,23 +38,79 @@ class CanvasManager:
         self.draw = ImageDraw.Draw(self.image)
 
         # Event bindings
+        self.canvas.bind("<Button-1>", self.start_stroke)
         self.canvas.bind("<B1-Motion>", self.paint)
+        self.canvas.bind("<ButtonRelease-1>", self.end_stroke)
         self.canvas.bind("<Button-3>", self.delete_stroke)
-        self.canvas.bind("<Button-1>", lambda e: self.canvas.focus_set())
+        
+        # Touch event support
+        self.canvas.bind("<<Double-Button-1>>", self.start_stroke)  # Touch tap
         
         # Change highlight color when focused
         self.canvas.bind("<FocusIn>", lambda e: self.canvas.config(highlightbackground="blue"))
         self.canvas.bind("<FocusOut>", lambda e: self.canvas.config(highlightbackground="black"))
 
+    def start_stroke(self, event):
+        """Start a new stroke"""
+        self.drawing = True
+        self.last_x = event.x
+        self.last_y = event.y
+        self.canvas.focus_set()
+        
     def paint(self, event):
         """Draw on canvas and update internal image"""
-        # Get brush radius directly from the IntVar
+        if not self.drawing:
+            return
+            
         r = self.brush_radius_var.get() if self.brush_radius_var else DEFAULT_BRUSH_RADIUS
         x, y = event.x, event.y
-        oval_id = self.canvas.create_oval(x - r, y - r, x + r, y + r, fill="black", outline="black")
-        self.stroke_history.append((x - r, y - r, x + r, y + r, r, oval_id))
-        self.draw.ellipse([x - r, y - r, x + r, y + r], fill="black")
+        
+        # Draw line between last and current position for smooth strokes
+        if self.last_x and self.last_y:
+            points = self._interpolate_points((self.last_x, self.last_y), (x, y), r)
+            for px, py in points:
+                oval_id = self.canvas.create_oval(px - r, py - r, px + r, py + r,
+                                               fill="black", outline="black")
+                self.stroke_history.append((px - r, py - r, px + r, py + r, r, oval_id))
+                self.draw.ellipse([px - r, py - r, px + r, py + r], fill="black")
+        
+        self.last_x = x
+        self.last_y = y
         self.update_bbox()
+        
+    def end_stroke(self, event):
+        """End the current stroke and notify callback if set"""
+        self.drawing = False
+        self.last_x = None
+        self.last_y = None
+        if self.stroke_callback:
+            self.stroke_callback(self.get_processed_image())
+            
+    def _interpolate_points(self, p1: Tuple[int, int], p2: Tuple[int, int],
+                          step: int = 5) -> list:
+        """Interpolate points between two coordinates for smooth lines"""
+        x1, y1 = p1
+        x2, y2 = p2
+        points = []
+        
+        dx = x2 - x1
+        dy = y2 - y1
+        distance = max(abs(dx), abs(dy))
+        
+        if distance == 0:
+            return [(x1, y1)]
+            
+        step_x = dx / (distance / step)
+        step_y = dy / (distance / step)
+        
+        for i in range(int(distance / step)):
+            x = x1 + step_x * i
+            y = y1 + step_y * i
+            points.append((int(x), int(y)))
+            
+        points.append((x2, y2))
+        return points
+        
 
     def delete_stroke(self, event):
         """Delete the closest stroke to the mouse pointer"""

@@ -10,7 +10,7 @@ from tkinter import ttk
 import json
 import os
 
-from ui.tabs import TAB_ORDER, DataPreparationTab, TrainingTab, PredictionTab
+from src.ui.tabs import TAB_ORDER, DataPreparationTab, TrainingTab, PredictionTab
 
 class MergedApp(ctk.CTk):
     """Main application class that manages the tab-based interface."""
