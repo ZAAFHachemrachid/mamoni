@@ -1,0 +1,113 @@
+\chapter{Résultats Attendus}
+
+\section{Analyse des Résultats}
+
+\subsection{Performance Globale}
+Les résultats attendus de notre système comprennent :
+
+\begin{itemize}
+    \item \textbf{Métriques de Classification}
+    \begin{itemize}
+        \item Précision globale : 85-90\%
+        \item F1-score moyen : 0.87-0.92
+        \item Temps de traitement : < 100ms par image
+    \end{itemize}
+
+    \item \textbf{Analyse par Chiffre}
+    \begin{itemize}
+        \item Variation de performance selon les chiffres
+        \item Identification des cas difficiles (ex: 1 vs 7, 4 vs 9)
+        \item Distribution des erreurs par classe
+    \end{itemize}
+\end{itemize}
+
+\subsection{Analyse Détaillée}
+Examen approfondi des résultats :
+
+\begin{enumerate}
+    \item \textbf{Patterns de Reconnaissance}
+    \begin{itemize}
+        \item Caractéristiques discriminantes identifiées
+        \item Zones d'attention du modèle
+        \item Robustesse aux variations
+    \end{itemize}
+
+    \item \textbf{Cas Particuliers}
+    \begin{itemize}
+        \item Analyse des succès remarquables
+        \item Étude des échecs typiques
+        \item Identification des points d'amélioration
+    \end{itemize}
+\end{enumerate}
+
+\section{Comparaison avec d'autres Méthodes}
+
+\subsection{Benchmarks}
+Comparaison avec les méthodes existantes :
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Méthode} & \textbf{Précision} & \textbf{Temps} & \textbf{Complexité} \\
+\hline
+K-moyennes (notre approche) & 87\% & Rapide & Moyenne \\
+SVM & 92\% & Moyen & Élevée \\
+CNN & 99\% & Lent & Très élevée \\
+KNN & 85\% & Très lent & Faible \\
+\hline
+\end{tabular}
+\caption{Comparaison des performances des différentes méthodes}
+\end{table}
+
+\subsection{Avantages Comparatifs}
+Notre approche présente plusieurs avantages :
+
+\begin{itemize}
+    \item \textbf{Efficacité Computationnelle}
+    \begin{itemize}
+        \item Temps d'entraînement réduit
+        \item Faible consommation mémoire
+        \item Parallélisation efficace
+    \end{itemize}
+
+    \item \textbf{Simplicité d'Implémentation}
+    \begin{itemize}
+        \item Code maintainable
+        \item Déploiement facile
+        \item Déboggage simplifié
+    \end{itemize}
+
+    \item \textbf{Interprétabilité}
+    \begin{itemize}
+        \item Visualisation des centroïdes
+        \item Compréhension des décisions
+        \item Analyse des erreurs facilitée
+    \end{itemize}
+\end{itemize}
+
+\subsection{Points d'Amélioration}
+Identification des axes de progression :
+
+\begin{itemize}
+    \item \textbf{Précision}
+    \begin{itemize}
+        \item Optimisation des hyperparamètres
+        \item Enrichissement des caractéristiques
+        \item Raffinement de la métrique de distance
+    \end{itemize}
+
+    \item \textbf{Robustesse}
+    \begin{itemize}
+        \item Gestion du bruit
+        \item Adaptation aux variations d'échelle
+        \item Résistance aux outliers
+    \end{itemize}
+
+    \item \textbf{Scalabilité}
+    \begin{itemize}
+        \item Optimisation mémoire
+        \item Traitement distribué
+        \item Mise à l'échelle horizontale
+    \end{itemize}
+\end{itemize}

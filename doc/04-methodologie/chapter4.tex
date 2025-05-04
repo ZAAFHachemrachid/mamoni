@@ -1,0 +1,100 @@
+\chapter{Méthodologie}
+
+\section{Initialisation des Groupes}
+
+\subsection{Choix du Nombre de Groupes}
+La détermination du nombre optimal de groupes (k) est cruciale pour l'algorithme des k-moyennes :
+
+\begin{itemize}
+    \item \textbf{Méthodes de Sélection}
+    \begin{itemize}
+        \item Méthode du coude (Elbow method)
+        \item Silhouette score
+        \item Gap statistic
+    \end{itemize}
+
+    \item \textbf{Considérations Pratiques}
+    \begin{itemize}
+        \item Complexité computationnelle
+        \item Compromis biais-variance
+        \item Interprétabilité des résultats
+    \end{itemize}
+\end{itemize}
+
+\subsection{Stratégies d'Initialisation}
+Plusieurs approches sont considérées pour l'initialisation des centroïdes :
+
+\begin{enumerate}
+    \item \textbf{K-means++}
+    \begin{itemize}
+        \item Sélection probabiliste des centroïdes initiaux
+        \item Maximisation des distances entre centroïdes
+        \item Réduction de la sensibilité à l'initialisation
+    \end{itemize}
+
+    \item \textbf{Initialisation Aléatoire}
+    \begin{itemize}
+        \item Sélection aléatoire des points
+        \item Multiples initialisations
+        \item Sélection de la meilleure configuration
+    \end{itemize}
+\end{enumerate}
+
+\section{Application de l'Algorithme k-Moyennes}
+
+\subsection{Processus Itératif}
+L'algorithme suit un processus itératif en deux étapes :
+
+\begin{enumerate}
+    \item \textbf{Attribution des Points}
+    \begin{itemize}
+        \item Calcul des distances aux centroïdes
+        \item Assignation au groupe le plus proche
+        \item Mise à jour des appartenances
+    \end{itemize}
+
+    \item \textbf{Mise à jour des Centroïdes}
+    \begin{itemize}
+        \item Calcul des moyennes par groupe
+        \item Déplacement des centroïdes
+        \item Vérification de la convergence
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Critères de Convergence}
+Les critères d'arrêt de l'algorithme incluent :
+
+\begin{itemize}
+    \item \textbf{Conditions d'Arrêt}
+    \begin{itemize}
+        \item Nombre maximum d'itérations
+        \item Seuil de variation minimal
+        \item Stabilité des assignations
+    \end{itemize}
+
+    \item \textbf{Métriques de Qualité}
+    \begin{itemize}
+        \item Inertie intra-cluster
+        \item Séparation inter-clusters
+        \item Homogénéité des groupes
+    \end{itemize}
+\end{itemize}
+
+\subsection{Optimisations}
+Plusieurs optimisations sont mises en œuvre :
+
+\begin{itemize}
+    \item \textbf{Algorithmes Efficaces}
+    \begin{itemize}
+        \item Structures de données optimisées
+        \item Calculs vectorisés
+        \item Parallélisation des opérations
+    \end{itemize}
+
+    \item \textbf{Gestion de la Mémoire}
+    \begin{itemize}
+        \item Traitement par lots
+        \item Mise en cache intelligente
+        \item Optimisation des ressources
+    \end{itemize}
+\end{itemize}

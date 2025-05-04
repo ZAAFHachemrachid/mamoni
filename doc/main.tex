@@ -1,0 +1,37 @@
+\input{preamble}
+
+\begin{document}
+
+% Front matter
+\frontmatter
+\title{Title of the Thesis}
+\author{Author Name}
+\date{\today}
+\maketitle
+
+% Table of contents
+\tableofcontents
+\listoffigures
+\listoftables
+
+% Main content
+\mainmatter
+
+% Include all chapters
+\input{01-introduction/chapter1}
+\input{02-etat_de_art/chapter2}
+\input{03-donnees_pretraitement/chapter3}
+\input{04-methodologie/chapter4}
+\input{05-implementation/chapter5}
+\input{06-evaluation_validation/chapter6}
+\input{07-resultats_attendus/chapter7}
+\input{08-perspectives/chapter8}
+\input{09-conclusion/chapter9}
+
+% Bibliography
+\printbibliography[heading=bibintoc]
+
+% Back matter
+\backmatter
+
+\end{document}

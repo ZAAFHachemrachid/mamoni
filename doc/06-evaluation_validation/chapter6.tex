@@ -1,0 +1,119 @@
+\chapter{Évaluation et Validation}
+
+\section{Métriques d'Évaluation}
+
+\subsection{Métriques de Performance}
+Les performances du système sont évaluées selon plusieurs critères :
+
+\begin{itemize}
+    \item \textbf{Précision (Accuracy)}
+    \begin{equation}
+        Accuracy = \frac{\text{Nombre de prédictions correctes}}{\text{Nombre total de prédictions}}
+    \end{equation}
+
+    \item \textbf{Matrice de Confusion}
+    \begin{itemize}
+        \item Vrais positifs (VP)
+        \item Faux positifs (FP)
+        \item Vrais négatifs (VN)
+        \item Faux négatifs (FN)
+    \end{itemize}
+
+    \item \textbf{Métriques par Classe}
+    \begin{align*}
+        Précision &= \frac{VP}{VP + FP} \\
+        Rappel &= \frac{VP}{VP + FN} \\
+        F1\text{-}score &= 2 \times \frac{Précision \times Rappel}{Précision + Rappel}
+    \end{align*}
+\end{itemize}
+
+\subsection{Métriques de Clustering}
+Évaluation spécifique aux k-moyennes :
+
+\begin{itemize}
+    \item \textbf{Inertie}
+    \begin{equation}
+        Inertie = \sum_{i=1}^{n} \min_{\mu_j \in C} (||x_i - \mu_j||^2)
+    \end{equation}
+
+    \item \textbf{Score de Silhouette}
+    \begin{equation}
+        s(i) = \frac{b(i) - a(i)}{\max(a(i), b(i))}
+    \end{equation}
+    où :
+    \begin{itemize}
+        \item $a(i)$ : distance moyenne intra-cluster
+        \item $b(i)$ : distance moyenne au cluster le plus proche
+    \end{itemize}
+
+    \item \textbf{Pureté des Clusters}
+    \begin{equation}
+        Pureté = \frac{1}{N} \sum_{i=1}^{k} \max_j |c_i \cap t_j|
+    \end{equation}
+\end{itemize}
+
+\section{Validation Croisée}
+
+\subsection{Protocole de Validation}
+La validation suit un processus rigoureux :
+
+\begin{enumerate}
+    \item \textbf{K-Fold Cross Validation}
+    \begin{itemize}
+        \item Division en k sous-ensembles
+        \item Rotation des ensembles test/validation
+        \item Agrégation des résultats
+    \end{itemize}
+
+    \item \textbf{Stratification}
+    \begin{itemize}
+        \item Maintien de la distribution des classes
+        \item Équilibrage des ensembles
+        \item Représentativité des échantillons
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Analyse des Résultats}
+L'analyse comprend plusieurs aspects :
+
+\begin{itemize}
+    \item \textbf{Statistiques Descriptives}
+    \begin{itemize}
+        \item Moyenne et écart-type des performances
+        \item Intervalles de confiance
+        \item Tests de significativité
+    \end{itemize}
+
+    \item \textbf{Analyse des Erreurs}
+    \begin{itemize}
+        \item Identification des cas problématiques
+        \item Patterns d'erreurs récurrents
+        \item Suggestions d'amélioration
+    \end{itemize}
+
+    \item \textbf{Courbes de Performance}
+    \begin{itemize}
+        \item Courbes d'apprentissage
+        \item Courbes ROC
+        \item Matrices de confusion normalisées
+    \end{itemize}
+\end{itemize}
+
+\subsection{Robustesse du Modèle}
+Évaluation de la stabilité :
+
+\begin{itemize}
+    \item \textbf{Tests de Sensibilité}
+    \begin{itemize}
+        \item Variation des paramètres
+        \item Perturbations des données
+        \item Analyse de stabilité
+    \end{itemize}
+
+    \item \textbf{Validation sur Données Indépendantes}
+    \begin{itemize}
+        \item Jeux de données externes
+        \item Conditions réelles d'utilisation
+        \item Généralisation des performances
+    \end{itemize}
+\end{itemize}

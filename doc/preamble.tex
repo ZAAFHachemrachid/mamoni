@@ -1,0 +1,54 @@
+\documentclass[12pt,a4paper]{report}
+
+% Language and encoding settings
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+
+% Math packages
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{mathtools}
+
+% Graphics and figures
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{wrapfig}
+
+% Bibliography settings
+\usepackage[backend=biber,
+            style=numeric,
+            sorting=none]{biblatex}
+\addbibresource{references.bib}
+
+% Custom formatting
+\usepackage{geometry}
+\geometry{top=2.5cm,bottom=2.5cm,left=2.5cm,right=2.5cm}
+\usepackage{setspace}
+\onehalfspacing
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    pdftitle={Thesis},
+    pdfauthor={Author}
+}
+
+% Table packages
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+
+% Code listings
+\usepackage{listings}
+\usepackage{xcolor}
+
+% Custom commands and environments
+\newcommand{\code}[1]{\texttt{#1}}
+\setcounter{tocdepth}{3}
+\setcounter{secnumdepth}{3}

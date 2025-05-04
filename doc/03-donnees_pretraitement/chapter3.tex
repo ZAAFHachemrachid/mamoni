@@ -1,0 +1,75 @@
+\chapter{Données et Prétraitement}
+
+\section{Choix de la Base de Données}
+
+\subsection{Base de Données MNIST}
+La base de données MNIST (Modified National Institute of Standards and Technology) constitue une référence standard dans le domaine de la reconnaissance de chiffres manuscrits. Elle présente les caractéristiques suivantes :
+
+\begin{itemize}
+    \item 60 000 images d'entraînement
+    \item 10 000 images de test
+    \item Images en niveaux de gris de 28x28 pixels
+    \item Chiffres normalisés et centrés
+\end{itemize}
+
+\subsection{Caractéristiques des Données}
+Les données présentent plusieurs aspects importants :
+\begin{itemize}
+    \item \textbf{Uniformité} : Taille et format standardisés
+    \item \textbf{Diversité} : Différents styles d'écriture
+    \item \textbf{Équilibre} : Distribution relativement équitable des classes
+    \item \textbf{Qualité} : Images nettoyées et validées
+\end{itemize}
+
+\section{Prétraitement des Données}
+
+\subsection{Étapes de Prétraitement}
+Le prétraitement des données comprend plusieurs étapes essentielles :
+
+\begin{enumerate}
+    \item \textbf{Normalisation}
+    \begin{itemize}
+        \item Mise à l'échelle des valeurs de pixels [0,1]
+        \item Centrage des données
+        \item Standardisation
+    \end{itemize}
+
+    \item \textbf{Augmentation des Données}
+    \begin{itemize}
+        \item Rotations légères
+        \item Translations
+        \item Modifications d'échelle
+    \end{itemize}
+
+    \item \textbf{Réduction de Dimension}
+    \begin{itemize}
+        \item Analyse en Composantes Principales (ACP)
+        \item Sélection des caractéristiques principales
+        \item Conservation de l'information pertinente
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Validation de la Qualité}
+Pour assurer la qualité du prétraitement :
+
+\begin{itemize}
+    \item \textbf{Vérification visuelle}
+    \begin{itemize}
+        \item Inspection des images transformées
+        \item Confirmation de la préservation des caractéristiques importantes
+    \end{itemize}
+
+    \item \textbf{Analyses Statistiques}
+    \begin{itemize}
+        \item Distribution des valeurs de pixels
+        \item Variance expliquée après réduction
+        \item Corrélations entre caractéristiques
+    \end{itemize}
+
+    \item \textbf{Tests de Robustesse}
+    \begin{itemize}
+        \item Validation sur sous-ensembles
+        \item Tests de sensibilité aux paramètres
+        \item Évaluation de la stabilité
+    \end{itemize}
+\end{itemize}

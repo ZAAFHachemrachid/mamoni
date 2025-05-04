@@ -1,0 +1,76 @@
+\chapter{État de l'Art}
+
+\section{Méthodes Existantes}
+
+La reconnaissance de chiffres manuscrits a connu une évolution significative au fil des années, avec le développement de diverses approches algorithmiques. Les principales méthodes peuvent être classées en plusieurs catégories :
+
+\subsection{Approches Traditionnelles}
+\begin{itemize}
+    \item \textbf{Template Matching} : Comparaison directe avec des modèles prédéfinis
+    \item \textbf{Extraction de Caractéristiques} : Analyse des contours, moments statistiques
+    \item \textbf{Méthodes Statistiques} : K plus proches voisins (k-NN), analyses discriminantes
+\end{itemize}
+
+\subsection{Apprentissage Automatique Classique}
+\begin{itemize}
+    \item \textbf{Machines à Vecteurs de Support (SVM)}
+    \item \textbf{Arbres de Décision et Forêts Aléatoires}
+    \item \textbf{K-moyennes et Variantes}
+\end{itemize}
+
+\subsection{Apprentissage Profond}
+\begin{itemize}
+    \item \textbf{Réseaux de Neurones Convolutifs (CNN)}
+    \item \textbf{Réseaux de Neurones Récurrents (RNN)}
+    \item \textbf{Architectures Hybrides}
+\end{itemize}
+
+\section{Avantages et Inconvénients}
+
+\subsection{Méthodes Traditionnelles}
+\begin{description}
+    \item[Avantages] 
+        \begin{itemize}
+            \item Simplicité d'implémentation
+            \item Faible coût computationnel
+            \item Interprétabilité des résultats
+        \end{itemize}
+    \item[Inconvénients]
+        \begin{itemize}
+            \item Performance limitée
+            \item Sensibilité au bruit
+            \item Manque de généralisation
+        \end{itemize}
+\end{description}
+
+\subsection{Apprentissage Automatique Classique}
+\begin{description}
+    \item[Avantages]
+        \begin{itemize}
+            \item Bon compromis performance/complexité
+            \item Adaptabilité aux données
+            \item Robustesse relative
+        \end{itemize}
+    \item[Inconvénients]
+        \begin{itemize}
+            \item Nécessite une extraction manuelle des caractéristiques
+            \item Performance moyenne sur des données complexes
+            \item Paramétrage parfois délicat
+        \end{itemize}
+\end{description}
+
+\subsection{Apprentissage Profond}
+\begin{description}
+    \item[Avantages]
+        \begin{itemize}
+            \item Performances élevées
+            \item Extraction automatique des caractéristiques
+            \item Grande capacité de généralisation
+        \end{itemize}
+    \item[Inconvénients]
+        \begin{itemize}
+            \item Coût computationnel important
+            \item Nécessite beaucoup de données
+            \item Complexité d'implémentation
+        \end{itemize}
+\end{description}

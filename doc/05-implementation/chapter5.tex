@@ -1,0 +1,123 @@
+\chapter{Implémentation}
+
+\section{Environnement de Développement}
+
+\subsection{Outils et Technologies}
+L'environnement de développement a été soigneusement sélectionné :
+
+\begin{itemize}
+    \item \textbf{Langage de Programmation}
+    \begin{itemize}
+        \item Python 3.8+
+        \item Bibliothèques scientifiques (NumPy, SciPy)
+        \item Outils de visualisation (Matplotlib, Seaborn)
+    \end{itemize}
+
+    \item \textbf{Frameworks et Bibliothèques}
+    \begin{itemize}
+        \item scikit-learn pour l'implémentation des k-moyennes
+        \item Pandas pour la manipulation des données
+        \item OpenCV pour le traitement d'images
+    \end{itemize}
+
+    \item \textbf{Environnement d'Exécution}
+    \begin{itemize}
+        \item Jupyter Notebooks pour le prototypage
+        \item Scripts Python modulaires pour la production
+        \item Tests unitaires avec pytest
+    \end{itemize}
+\end{itemize}
+
+\section{Code et Algorithmes}
+
+\subsection{Structure du Code}
+L'architecture du projet suit une organisation modulaire :
+
+\begin{verbatim}
+project/
+├── src/
+│   ├── preprocessing/
+│   ├── kmeans/
+│   ├── evaluation/
+│   └── utils/
+├── tests/
+├── data/
+└── notebooks/
+\end{verbatim}
+
+\subsection{Implémentation des Algorithmes}
+Les principales composantes algorithmiques comprennent :
+
+\begin{enumerate}
+    \item \textbf{Prétraitement}
+    \begin{lstlisting}[language=Python]
+def preprocess_image(image):
+    # Normalisation
+    normalized = image.astype(float) / 255.0
+    # Redimensionnement
+    resized = cv2.resize(normalized, (28, 28))
+    return resized
+    \end{lstlisting}
+
+    \item \textbf{K-moyennes}
+    \begin{lstlisting}[language=Python]
+class KMeansClassifier:
+    def __init__(self, n_clusters):
+        self.n_clusters = n_clusters
+        self.centroids = None
+
+    def fit(self, X):
+        # Initialisation k-means++
+        self.centroids = self._initialize_centroids(X)
+        while not self._converged():
+            # Assignation
+            labels = self._assign_clusters(X)
+            # Mise à jour
+            self._update_centroids(X, labels)
+    \end{lstlisting}
+\end{enumerate}
+
+\subsection{Optimisations Techniques}
+Plusieurs optimisations ont été implémentées :
+
+\begin{itemize}
+    \item \textbf{Vectorisation}
+    \begin{itemize}
+        \item Utilisation des opérations NumPy
+        \item Minimisation des boucles Python
+        \item Calculs matriciels optimisés
+    \end{itemize}
+
+    \item \textbf{Gestion de la Mémoire}
+    \begin{itemize}
+        \item Traitement par lots
+        \item Libération proactive de la mémoire
+        \item Optimisation des structures de données
+    \end{itemize}
+
+    \item \textbf{Parallélisation}
+    \begin{itemize}
+        \item Utilisation de multiprocessing
+        \item Calculs distribués des distances
+        \item Parallélisation des validations croisées
+    \end{itemize}
+\end{itemize}
+
+\subsection{Tests et Validation}
+Un ensemble complet de tests a été mis en place :
+
+\begin{itemize}
+    \item \textbf{Tests Unitaires}
+    \begin{itemize}
+        \item Validation des fonctions individuelles
+        \item Tests des cas limites
+        \item Vérification des sorties attendues
+    \end{itemize}
+
+    \item \textbf{Tests d'Intégration}
+    \begin{itemize}
+        \item Validation du pipeline complet
+        \item Tests de performance
+        \item Vérification de la cohérence
+    \end{itemize}
+\end{itemize}
