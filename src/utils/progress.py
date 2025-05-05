@@ -27,7 +27,7 @@ class ProgressManager:
     def start(self, mode='indeterminate', text="Processing..."):
         """Start progress indication."""
         self.state = ProgressState.LOADING
-        self.progress_bar['mode'] = mode
+        self.progress_bar.configure(mode=mode)
         if mode == 'indeterminate':
             self.progress_bar.start()
         self.progress_label.configure(text=text)
@@ -35,9 +35,10 @@ class ProgressManager:
 
     def update(self, value, max_value, text=None):
         """Update progress bar with current value."""
-        self.progress_bar['mode'] = 'determinate'
-        self.progress_bar['maximum'] = max_value
-        self.progress_bar['value'] = value
+        self.progress_bar.configure(mode='determinate')
+        # Convert to 0-1 range for CustomTkinter
+        progress = float(value) / float(max_value)
+        self.progress_bar.set(progress)
         if text:
             self.progress_label.configure(text=text)
         self.root.update_idletasks()
@@ -47,8 +48,8 @@ class ProgressManager:
         self.progress_bar.stop()
         self.state = ProgressState.COMPLETED if success else ProgressState.ERROR
         self.progress_label.configure(text=text)
-        self.progress_bar['mode'] = 'determinate'
-        self.progress_bar['value'] = self.progress_bar['maximum']
+        self.progress_bar.configure(mode='determinate')
+        self.progress_bar.set(1.0 if success else 0.0)
         self.root.update()
 
     def error(self, error_text):
@@ -56,8 +57,8 @@ class ProgressManager:
         self.state = ProgressState.ERROR
         self.progress_bar.stop()
         self.progress_label.configure(text=f"Error: {error_text}")
-        self.progress_bar['mode'] = 'determinate'
-        self.progress_bar['value'] = 0
+        self.progress_bar.configure(mode='determinate')
+        self.progress_bar.set(0.0)
         self.root.update()
 
     async def track_async_task(self, task, description="Loading..."):

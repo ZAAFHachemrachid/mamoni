@@ -2,7 +2,7 @@
 Preview Module - Handles image preview functionality
 """
 import customtkinter as ctk
-from PIL import Image, ImageTk
+from PIL import Image
 
 # Constants
 FINAL_SIZE = 50
@@ -43,6 +43,11 @@ class ImagePreviewFrame(ctk.CTkFrame):
 
         # Ensure image is correctly sized
         img_resized = img.resize((FINAL_SIZE, FINAL_SIZE), Image.LANCZOS)
-        self.photo_image = ImageTk.PhotoImage(img_resized)
-        self.preview_label._image = self.photo_image  # Store reference to prevent garbage collection
+        self.photo_image = ctk.CTkImage(light_image=img_resized,
+                                      dark_image=img_resized,
+                                      size=(FINAL_SIZE, FINAL_SIZE))
         self.preview_label.configure(image=self.photo_image)
+        
+    def clear(self):
+        """Clear the preview by displaying a blank image"""
+        self.display_image()  # Calls display_image with None which shows blank image

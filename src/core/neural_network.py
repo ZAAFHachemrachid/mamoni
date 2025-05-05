@@ -51,13 +51,23 @@ class NeuralNetwork:
             self.weights[i] -= lr * np.dot(activations[i].T, deltas[i]) / n_samples
             self.biases[i] -= lr * np.sum(deltas[i], axis=0, keepdims=True) / n_samples
 
-    def train_epoch(self, X, y, lr=0.01, batch_size=128):
-        """Train the network for one epoch."""
+    def train_epoch(self, X, y, lr=0.01, batch_size=128, progress_callback=None):
+        """Train the network for one epoch.
+        
+        Args:
+            X: Input features
+            y: Target labels
+            lr: Learning rate
+            batch_size: Size of training batches
+            progress_callback: Optional callback function to report batch progress
+        """
         indices = np.arange(X.shape[0])
         np.random.shuffle(indices)
         
         total_loss = 0
-        for start_idx in range(0, X.shape[0], batch_size):
+        num_batches = (X.shape[0] - 1) // batch_size + 1
+        
+        for batch_idx, start_idx in enumerate(range(0, X.shape[0], batch_size)):
             batch_indices = indices[start_idx:start_idx + batch_size]
             X_batch = X[batch_indices]
             y_batch = y[batch_indices]
@@ -71,6 +81,10 @@ class NeuralNetwork:
             # Calculate loss
             log_probs = np.log(activations[-1] + 1e-8)
             total_loss -= np.sum(y_batch * log_probs)
+            
+            # Update progress if callback provided
+            if progress_callback:
+                progress_callback(batch_idx + 1)
             
         return total_loss / X.shape[0]
 

@@ -72,6 +72,9 @@ class ModelManager:
         Args:
             filename (str, optional): Specific model file to load. If None, loads latest.
             
+        Yields:
+            float: Progress value between 0 and 1
+            
         Returns:
             tuple: (NeuralNetwork, dict) - Loaded model and metadata
         """
@@ -91,7 +94,9 @@ class ModelManager:
                             self._load_npy_model_async(filepath),
                             description="Loading legacy model..."
                         )
-                    return await self._load_npy_model_async(filepath), {}
+                    model = await self._load_npy_model_async(filepath)
+                    yield 0.9  # Almost done
+                    yield (model, {})  # Final yield
                 filepath = sorted(json_files, key=lambda x: x.stat().st_mtime)[-1]
             else:
                 filepath = self.MODEL_DIR / filename
@@ -101,11 +106,34 @@ class ModelManager:
             # Load based on file extension
             if filepath.suffix == '.npy':
                 self.current_load_status = "Loading legacy model format..."
-                result = await self._load_npy_model_async(filepath)
-                return result, {}
+                model = await self._load_npy_model_async(filepath)
+                yield 0.9  # Almost done
+                yield (model, {})  # Final yield for legacy format
             else:
                 self.current_load_status = "Loading model..."
-                return await self._load_json_model_async(filepath)
+                yield 0.1  # Initial progress
+                
+                # Load and parse JSON
+                with open(filepath) as f:
+                    data = json.load(f)
+                yield 0.3  # JSON loaded
+                
+                layer_sizes = data['metadata']['layer_sizes']
+                model = NeuralNetwork(layer_sizes)
+                yield 0.5  # Network initialized
+                
+                # Convert weights/biases to numpy arrays with progress updates
+                total_arrays = len(data['weights']) + len(data['biases'])
+                for i, w in enumerate(data['weights']):
+                    model.weights[i] = np.array(w)
+                    yield 0.5 + ((i + 1) / total_arrays) * 0.25
+                    
+                for i, b in enumerate(data['biases']):
+                    model.biases[i] = np.array(b)
+                    yield 0.75 + ((i + 1) / total_arrays) * 0.25
+                
+                yield 1.0  # Complete
+                yield (model, data['metadata'])  # Final yield with metadata
                 
         except Exception as e:
             self.current_load_status = f"Error: {str(e)}"
@@ -114,15 +142,19 @@ class ModelManager:
     async def _load_npy_model_async(self, filepath):
         """Load model from legacy .npy format asynchronously."""
         try:
-            # Simulate async load for large files
+            # Load model data
             await asyncio.sleep(0)  # Allow other tasks to run
-            
             model_data = np.load(filepath, allow_pickle=True)
+            
+            # Extract weights and compute layer sizes
             weights = model_data[0]
             layer_sizes = [weights[0].shape[1]] + [w.shape[0] for w in weights]
             
+            # Initialize and load model
             model = NeuralNetwork(layer_sizes)
             model.load_model(filepath)
+            
+            await asyncio.sleep(0)  # Another yield point
             return model
         except Exception as e:
             raise ModelLoadError(f"Failed to load .npy model: {str(e)}")

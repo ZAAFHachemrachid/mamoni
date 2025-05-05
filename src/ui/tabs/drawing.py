@@ -36,17 +36,20 @@ class DrawingAppTab(ctk.CTkFrame):
 
     def _create_layout(self):
         """Create the main layout"""
-        # Left side - Canvas
+        # Left side - Controls
+        control_frame = ctk.CTkFrame(self)
+        control_frame.pack(side="left", fill="y", padx=10, pady=10)
+
+        # Create control panel
+        self.control_panel = ControlPanel(control_frame, self)
+
+        # Right side - Canvas
         canvas_frame = ctk.CTkFrame(self)
-        canvas_frame.pack(side="left", fill="both", expand=True, padx=10, pady=10)
+        canvas_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
 
         # Create canvas manager
         self.canvas_manager = CanvasManager(canvas_frame, self.canvas_size.get(), self.brush_radius)
         self.canvas_manager.canvas.pack(expand=True)
-
-        # Right side - Controls
-        control_frame = ctk.CTkFrame(self)
-        control_frame.pack(side="right", fill="y", padx=10, pady=10)
 
         # Create control panel
         self.control_panel = ControlPanel(control_frame, self)
