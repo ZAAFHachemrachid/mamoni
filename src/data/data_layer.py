@@ -21,8 +21,11 @@ class ImageDataset:
         self.features = None
         self.encoded_labels = None
         self.num_classes = 0
-        self.feature_method = 'average' # Default feature method
-        self.current_feature_size = (5, 5) # Default feature size
+        self.feature_method = 'advanced' # Enhanced feature method
+        self.current_feature_size = (10, 10) # Increased feature size
+        # Standardization parameters
+        self.mean = None
+        self.std = None
         # Split datasets
         self.train_features = None
         self.train_labels = None
@@ -177,7 +180,7 @@ class ImageDataset:
             logger.error(f"Dataset loading failed: {str(e)}")
             raise
 
-    def prepare_features(self, progress_callback=None, heatmap_callback=None, feature_method='average', feature_size=(5, 5)):
+    def prepare_features(self, progress_callback=None, heatmap_callback=None, feature_method='advanced', feature_size=(10, 10)):
         """Extract features from processed images for neural network training."""
         if not self.processed_images or not self.labels:
             raise ValueError("No images loaded to prepare features from.")
@@ -212,31 +215,94 @@ class ImageDataset:
                 progress_callback(i + 1, total_images,
                                   f"Preparing features: {i+1}/{total_images}")
 
-        self.features = np.array(features_list)
-        self.encoded_labels = np.array(labels_list)
-
+        features_array = np.array(features_list)
+        
+        # Standardize features
+        self.mean = np.mean(features_array, axis=0)
+        self.std = np.std(features_array, axis=0) + 1e-8  # Avoid division by zero
+        self.features = (features_array - self.mean) / self.std
+        
         # Convert labels to one-hot encoding
+        self.encoded_labels = np.array(labels_list)
         num_classes = len(np.unique(self.encoded_labels))
         one_hot_labels = np.eye(num_classes)[self.encoded_labels]
         self.encoded_labels = one_hot_labels
 
         print(f"Prepared {len(self.features)} feature vectors for NN using {feature_method} method and feature size {feature_size}.")
 
-    def image_to_features(self, image, method='average', feature_size=(5, 5)):
-        """Convert image to feature vector by downsampling using different methods."""
+    def image_to_features(self, image, method='advanced', feature_size=(10, 10)):
+        """Convert image to feature vector using advanced feature extraction."""
         if image is None:
             return None
 
         if feature_size == (50, 50): # No preparation, return flattened 50x50 image
             return image.flatten()
-        elif method == 'average':
-            return self._average_pooling_features(image, feature_size)
-        elif method == 'sum':
-            return self._sum_pooling_features(image, feature_size)
-        elif method == 'max':
-            return self._max_pooling_features(image, feature_size)
+        elif method == 'advanced':
+            return self._advanced_feature_extraction(image, feature_size)
+        elif method in ['average', 'sum', 'max']:
+            # Legacy support for old methods
+            if method == 'average':
+                return self._average_pooling_features(image, feature_size)
+            elif method == 'sum':
+                return self._sum_pooling_features(image, feature_size)
+            else:
+                return self._max_pooling_features(image, feature_size)
         else:
             raise ValueError(f"Unknown feature method: {method}")
+
+    def _advanced_feature_extraction(self, image, feature_size):
+        """Advanced feature extraction with multiple techniques combined."""
+        # Initialize feature array
+        features = np.zeros(feature_size)
+        block_size_y = image.shape[0] // feature_size[0]
+        block_size_x = image.shape[1] // feature_size[1]
+        
+        for i in range(feature_size[0]):
+            for j in range(feature_size[1]):
+                block = image[i*block_size_y:(i+1)*block_size_y,
+                            j*block_size_x:(j+1)*block_size_x]
+                
+                # Combine multiple feature types
+                avg_intensity = np.mean(block)
+                max_intensity = np.max(block)
+                std_intensity = np.std(block)
+                gradient_y = np.mean(np.abs(np.diff(block, axis=0)))
+                gradient_x = np.mean(np.abs(np.diff(block, axis=1)))
+                
+                # Weighted combination of features
+                features[i, j] = (0.3 * avg_intensity +
+                                0.2 * max_intensity +
+                                0.2 * std_intensity +
+                                0.15 * gradient_y +
+                                0.15 * gradient_x)
+        
+        return features.flatten()
+
+    def augment_image(self, image):
+        """Apply basic augmentation techniques to the image."""
+        augmented = []
+        
+        # Original image
+        augmented.append(image)
+        
+        # Slight rotation (±10 degrees)
+        for angle in [-10, 10]:
+            rotated = Image.fromarray(image.astype('uint8')).rotate(angle, resample=Image.BILINEAR)
+            augmented.append(np.array(rotated))
+        
+        # Small shifts (±2 pixels)
+        for shift in [-2, 2]:
+            shifted = np.roll(image, shift, axis=0)
+            augmented.append(shifted)
+            shifted = np.roll(image, shift, axis=1)
+            augmented.append(shifted)
+        
+        # Gaussian noise
+        noise = np.random.normal(0, 5, image.shape)
+        noisy = np.clip(image + noise, 0, 255)
+        augmented.append(noisy)
+        
+        return augmented
 
     def _average_pooling_features(self, image, feature_size):
         """Average pooling to create feature vector."""
@@ -293,21 +359,34 @@ class ImageDataset:
         except Exception as e:
             print(f"CSV write error: {e}")
 
-    def split_dataset(self, train_ratio, val_ratio, test_ratio):
-        """Splits the dataset into training, validation, and testing sets."""
+    def split_dataset(self, train_ratio=0.7, val_ratio=0.15, test_ratio=0.15):
+        """Splits the dataset into training, validation, and testing sets with proper stratification."""
         if self.features is None or self.encoded_labels is None:
             raise ValueError("Features must be prepared before splitting dataset.")
 
         if not (train_ratio + val_ratio + test_ratio) == 1.0:
             raise ValueError("Dataset split ratios must sum to 1.0")
 
-        indices = np.random.permutation(len(self.features))
-        train_size = int(len(self.features) * train_ratio)
-        val_size = int(len(self.features) * val_ratio)
-
-        train_indices = indices[:train_size]
-        val_indices = indices[train_size:train_size + val_size]
-        test_indices = indices[train_size + val_size:]
+        # Get original labels (not one-hot encoded)
+        labels = np.argmax(self.encoded_labels, axis=1)
+        
+        # Initialize indices for each split
+        train_indices, val_indices, test_indices = [], [], []
+        
+        # Split each class proportionally
+        for class_idx in range(self.num_classes):
+            class_indices = np.where(labels == class_idx)[0]
+            np.random.shuffle(class_indices)
+            
+            # Calculate split sizes for this class
+            n_samples = len(class_indices)
+            n_train = int(n_samples * train_ratio)
+            n_val = int(n_samples * val_ratio)
+            
+            # Split indices
+            train_indices.extend(class_indices[:n_train])
+            val_indices.extend(class_indices[n_train:n_train + n_val])
+            test_indices.extend(class_indices[n_train + n_val:])
 
         self.train_features = self.features[train_indices]
         self.train_labels = self.encoded_labels[train_indices]

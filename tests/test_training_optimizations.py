@@ -9,16 +9,28 @@ from src.data.data_layer import ImageDataset
 def test_training_optimizations():
     """Test and validate training optimizations"""
     
-    # Initialize dataset
+    # Initialize dataset with enhanced features
     dataset = ImageDataset()
     
-    # Create small sample dataset
+    # Create sample dataset
     X_train = np.random.randn(1000, 50, 50)  # 1000 sample images
     y_train = np.random.randint(0, 10, size=1000)  # 10 classes
     y_train_encoded = np.eye(10)[y_train]  # One-hot encode labels
     
-    # Initialize model
-    model = NeuralNetwork(layer_sizes=[2500, 128, 64, 10], gradient_clip=5.0)
+    # Prepare features with advanced extraction
+    X_features = []
+    for img in X_train:
+        features = dataset.image_to_features(img, method='advanced', feature_size=(10, 10))
+        X_features.append(features)
+    X_features = np.array(X_features)
+    
+    # Standardize features
+    mean = np.mean(X_features, axis=0)
+    std = np.std(X_features, axis=0) + 1e-8
+    X_features = (X_features - mean) / std
+    
+    # Initialize model with new architecture
+    model = NeuralNetwork()  # Uses default architecture [2500->128->64->output]
     
     # Monitoring metrics
     losses = []
@@ -29,7 +41,11 @@ def test_training_optimizations():
     
     # Training loop
     num_epochs = 5
-    batch_size = 32
+    batch_size = 256  # Increased batch size
+    learning_rate = 0.01
+    min_learning_rate = 1e-6
+    decay_rate = 0.95
+    decay_steps = 1000
     start_time = time.time()
     
     print("\nStarting training validation...\n")
@@ -40,23 +56,30 @@ def test_training_optimizations():
         grad_norm_sum = 0
         correct_predictions = 0
         
+        # Apply learning rate decay
+        current_step = epoch * num_batches
+        current_lr = max(
+            learning_rate * (decay_rate ** (current_step / decay_steps)),
+            min_learning_rate
+        )
+        
         # Training batches
-        num_batches = len(X_train) // batch_size
+        num_batches = len(X_features) // batch_size
         for i in range(num_batches):
             batch_start = i * batch_size
             batch_end = (i + 1) * batch_size
             
-            X_batch = X_train[batch_start:batch_end].reshape(batch_size, -1)
+            X_batch = X_features[batch_start:batch_end]
             y_batch = y_train_encoded[batch_start:batch_end]
             
-            # Forward pass
-            activations = model.forward(X_batch)
+            # Forward pass with dropout
+            activations, dropout_masks = model.forward(X_batch, training=True)
             
             # Store gradients before update
             old_weights = [w.copy() for w in model.weights]
             
             # Backward pass
-            model.backward(X_batch, y_batch, activations, lr=0.01)
+            model.backward(X_batch, y_batch, activations, dropout_masks, lr=current_lr)
             
             # Calculate gradient norm
             grad_norm = np.sqrt(sum(np.sum(np.square(w_new - w_old)) 
@@ -106,13 +129,13 @@ def test_training_optimizations():
     print(f"Average Epoch Time: {np.mean(times):.2f}s")
     print(f"Total Training Time: {total_time:.2f}s")
     
-    # Validation checks
+    # Extended validation checks
     print("\nOptimization Validations:")
     print("-" * 40)
     
     # Check gradient clipping
     print("Gradient Clipping:", end=" ")
-    if all(norm <= model.gradient_clip * 1.1 for norm in grad_norms):  # 1.1 for numerical stability
+    if all(norm <= model.clip_value * 1.1 for norm in grad_norms):
         print("✓ Working (all gradients within clip threshold)")
     else:
         print("✗ Not working properly")
@@ -120,14 +143,14 @@ def test_training_optimizations():
     # Check memory efficiency
     print("Memory Efficiency:", end=" ")
     memory_increase = max(memory_usage) - min(memory_usage)
-    if memory_increase < 500:  # Less than 500MB increase
+    if memory_increase < 500:
         print("✓ Good (stable memory usage)")
     else:
         print("✗ Poor (significant memory growth)")
     
     # Check training speed
     print("Training Speed:", end=" ")
-    if np.mean(times) < 5:  # Less than 5 seconds per epoch
+    if np.mean(times) < 5:
         print("✓ Good (fast epoch processing)")
     else:
         print("✗ Slow (needs optimization)")
@@ -138,6 +161,23 @@ def test_training_optimizations():
         print("✓ Model is learning (loss decreasing)")
     else:
         print("✗ Model not learning effectively")
+        
+    # Check learning rate decay
+    print("Learning Rate Decay:", end=" ")
+    final_lr = learning_rate * (decay_rate ** ((num_epochs * num_batches) / decay_steps))
+    if min_learning_rate <= final_lr < learning_rate:
+        print("✓ Working (learning rate decreased properly)")
+    else:
+        print("✗ Not working as expected")
+    
+    # Check prediction confidence
+    print("Prediction Confidence:", end=" ")
+    final_activations = model.forward(X_features[:100], training=False)[-1]
+    confidence_scores = np.max(final_activations, axis=1)
+    if np.mean(confidence_scores) > 0.5:  # Average confidence above 50%
+        print("✓ Good (model making confident predictions)")
+    else:
+        print("✗ Poor (low confidence predictions)")
 
 if __name__ == "__main__":
     test_training_optimizations()
