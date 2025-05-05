@@ -75,12 +75,23 @@ class NeuralNetController:
         try:
             if self.model is None:
                 raise ValueError("No model loaded")
+            
+            if self.dataset is None:
+                raise ValueError("No dataset loaded to get preprocessing parameters")
                 
             # Convert image to numpy array and normalize
-            img_array = np.array(image).reshape(1, -1) / 255.0
+            img_array = np.array(image) / 255.0
+            
+            # Apply same feature extraction as training data
+            feature_method = getattr(self.dataset, 'feature_method', 'average')
+            feature_size = getattr(self.dataset, 'current_feature_size', (5, 5))
+            
+            # Use dataset's image_to_features method for consistency
+            features = self.dataset.image_to_features(img_array, method=feature_method, feature_size=feature_size)
+            features = features.reshape(1, -1)  # Add batch dimension
             
             # Make prediction
-            prediction = self.model.predict(img_array)[0]
+            prediction = self.model.predict(features)[0]
             self._last_prediction = prediction
             
             # Notify callback if set

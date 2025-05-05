@@ -46,90 +46,81 @@ class PredictionTab(ctk.CTkFrame):
         
     def _create_layout(self):
         """Create the main layout"""
-        # Configure grid
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=2)
-        self.grid_rowconfigure(0, weight=1)
-        
-        # Left side - Canvas, Preview and History
+        # Left side - Controls and Probability Bars
         left_frame = ctk.CTkFrame(self)
-        left_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
-        
-        # Canvas section with controls
-        canvas_frame = ctk.CTkFrame(left_frame)
-        canvas_frame.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
-        
-        canvas_label = ctk.CTkLabel(canvas_frame, text="Draw a digit")
-        canvas_label.grid(row=0, column=0, columnspan=2, padx=5, pady=5)
-        
-        # Canvas control buttons
-        clear_btn = ctk.CTkButton(canvas_frame, text="Clear", command=self._clear_canvas)
-        clear_btn.grid(row=1, column=0, padx=5, pady=5)
+        left_frame.pack(side="left", fill="y", padx=10, pady=10)
 
-        self.load_model_btn = ctk.CTkButton(canvas_frame, text="Load Model", command=self._load_model, state="normal")
-        
-        load_model_btn = ctk.CTkButton(canvas_frame, text="Load Model", command=self._load_model)
-        load_model_btn.grid(row=1, column=1, padx=5, pady=5)
-        
-        self.canvas_manager.canvas.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
-        
-        # Preview section
-        preview_label = ctk.CTkLabel(left_frame, text="Processed Image")
-        preview_label.grid(row=2, column=0, padx=5, pady=(15,5))
-        
-        self.preview = ImagePreviewFrame(left_frame)
-        self.preview.grid(row=3, column=0, padx=5, pady=5)
-        
-        # History section
-        history_label = ctk.CTkLabel(left_frame, text="Recent Predictions")
-        history_label.grid(row=4, column=0, padx=5, pady=(15,5))
-        
-        self.history_frame = ctk.CTkFrame(left_frame)
-        self.history_frame.grid(row=5, column=0, padx=5, pady=5, sticky="nsew")
-        
-        # Right side - Probability Bars
-        right_frame = ctk.CTkFrame(self)
-        right_frame.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
-        right_frame.grid_columnconfigure(0, weight=1)
-        
         # Model loading status
-        self.loading_label = ctk.CTkLabel(right_frame, text="Loading model...", text_color="gray")
-        self.loading_label.grid(row=0, column=0, padx=5, pady=5)
+        self.loading_label = ctk.CTkLabel(left_frame, text="Loading model...", text_color="gray")
+        self.loading_label.pack(padx=5, pady=5)
         
-        self.loading_progress = ctk.CTkProgressBar(right_frame)
-        self.loading_progress.grid(row=1, column=0, columnspan=2, padx=5, pady=(0,10), sticky="ew")
+        self.loading_progress = ctk.CTkProgressBar(left_frame)
+        self.loading_progress.pack(padx=5, pady=(0,10), fill="x")
         self.loading_progress.set(0)
         
+        # Model control buttons
+        buttons_frame = ctk.CTkFrame(left_frame)
+        buttons_frame.pack(fill="x", padx=5, pady=5)
+        
+        self.load_model_btn = ctk.CTkButton(buttons_frame, text="Load Model", command=self._load_model, state="normal")
+        self.load_model_btn.pack(side="left", padx=2)
+        
+        clear_btn = ctk.CTkButton(buttons_frame, text="Clear", command=self._clear_canvas)
+        clear_btn.pack(side="right", padx=2)
+
         # Title for probability section
-        self.prob_label = ctk.CTkLabel(right_frame, text="Prediction Probabilities")
-        self.prob_label.grid(row=2, column=0, padx=5, pady=5)
-        self.prob_label.grid_remove()  # Hide until model is loaded
+        self.prob_label = ctk.CTkLabel(left_frame, text="Prediction Probabilities")
+        self.prob_label.pack(padx=5, pady=(15,5))
+        self.prob_label.pack_forget()  # Hide until model is loaded
         
         # Create probability bars with improved styling
+        prob_container = ctk.CTkFrame(left_frame)
+        prob_container.pack(fill="x", padx=10, pady=5)
+        
         self.prob_bars = []
         self.prob_labels = []
-        
-        prob_container = ctk.CTkFrame(right_frame)
-        prob_container.grid(row=3, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
         
         for i in range(10):
             # Container for each probability row
             row_frame = ctk.CTkFrame(prob_container)
-            row_frame.grid(row=i, column=0, padx=5, pady=2, sticky="ew")
-            row_frame.grid_columnconfigure(1, weight=1)
+            row_frame.pack(fill="x", padx=5, pady=2)
             
             # Label showing digit and probability
             label = ctk.CTkLabel(row_frame, text=f"Digit {i}: 0%", width=100)
-            label.grid(row=0, column=0, padx=5, pady=2, sticky="w")
+            label.pack(side="left", padx=5)
             self.prob_labels.append(label)
-            label.grid_remove()
+            label.pack_forget()
             
             # Progress bar showing probability
             bar = ctk.CTkProgressBar(row_frame, height=20)
-            bar.grid(row=0, column=1, padx=5, pady=2, sticky="ew")
+            bar.pack(side="right", fill="x", expand=True, padx=5)
             bar.set(0)
             self.prob_bars.append(bar)
-            bar.grid_remove()
+            bar.pack_forget()
+
+        # Preview section
+        preview_label = ctk.CTkLabel(left_frame, text="Processed Image")
+        preview_label.pack(padx=5, pady=(15,5))
+        
+        self.preview = ImagePreviewFrame(left_frame)
+        self.preview.pack(padx=5, pady=5)
+        
+        # History section
+        history_label = ctk.CTkLabel(left_frame, text="Recent Predictions")
+        history_label.pack(padx=5, pady=(15,5))
+        
+        self.history_frame = ctk.CTkFrame(left_frame)
+        self.history_frame.pack(fill="both", expand=True, padx=5, pady=5)
+
+        # Right side - Canvas
+        right_frame = ctk.CTkFrame(self)
+        right_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
+
+        canvas_label = ctk.CTkLabel(right_frame, text="Draw a digit")
+        canvas_label.pack(padx=5, pady=5)
+        
+        self.canvas_manager.canvas.pack(expand=True, padx=5, pady=5)
+        
         
         # Initialize prediction manager
         self.prediction_manager = PredictionManager(self, None, self.controller, self.dataset)
@@ -181,35 +172,32 @@ class PredictionTab(ctk.CTkFrame):
             
     def _check_model_loaded(self):
         """Check if the model is loaded and update UI accordingly"""
-        if self.controller and self.controller.model:
-            if not self.is_model_loaded:
-                self.is_model_loaded = True
+        is_loaded = self.controller and self.controller.is_model_loaded()
+        
+        if is_loaded != self.is_model_loaded:
+            self.is_model_loaded = is_loaded
+            if is_loaded:
                 self.loading_label.configure(text="Model ready", text_color="green")
                 self.loading_progress.set(1)
-                self.prob_label.grid()
+                self.prob_label.pack()
                 for label, bar in zip(self.prob_labels, self.prob_bars):
-                    label.grid()
-                    bar.grid()
-        else:
-            self.after(1000, self._check_model_loaded)
+                    label.pack()
+                    bar.pack()
+            else:
+                self.loading_label.configure(text="No model loaded", text_color="gray")
+                self.loading_progress.set(0)
+                self.prob_label.pack_forget()
+                for label, bar in zip(self.prob_labels, self.prob_bars):
+                    label.pack_forget()
+                    bar.pack_forget()
+        
+        self.after(1000, self._check_model_loaded)
             
     def on_drawing_update(self, image):
         """Callback for canvas drawing updates"""
         if not self.is_predicting and self.is_model_loaded:
-            # Get or create event loop
-            try:
-                loop = asyncio.get_event_loop()
-            except RuntimeError:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            
-            # Run async prediction in thread
-            def run_async():
-                loop.run_until_complete(self.predict(image))
-            
-            thread = threading.Thread(target=run_async)
-            thread.daemon = True
-            thread.start()
+            # Run prediction asynchronously
+            asyncio.run(self.predict(image))
             
     async def predict(self, image):
         """Make a prediction on the given image with caching and retries"""
@@ -232,14 +220,31 @@ class PredictionTab(ctk.CTkFrame):
             retry_count = 0
             while retry_count < self.max_retries:
                 try:
-                    # Get prediction and probabilities
-                    features = self.prediction_manager._prepare_image_features(image)
-                    if features is not None and self.controller and self.controller.model:
+                    if self.controller and self.controller.model:
                         # Show prediction progress
                         self._update_prediction_status("Running neural network...", "orange")
+                        
+                        # Process image and get prediction
+                        prediction = self.controller.process_canvas_input(image)
+                        
+                        # Get processed features using same preprocessing as prediction
+                        feature_method = getattr(self.controller.dataset, 'feature_method', 'average')
+                        feature_size = getattr(self.controller.dataset, 'current_feature_size', (5, 5))
+                        
+                        # Convert and normalize image
+                        img_array = np.array(image) / 255.0
+                        
+                        # Extract features using dataset's method
+                        features = self.controller.dataset.image_to_features(
+                            img_array,
+                            method=feature_method,
+                            feature_size=feature_size
+                        )
+                        features = features.reshape(1, -1)
+                        
+                        # Get probabilities using processed features
                         activations = self.controller.model.forward(features)
                         probabilities = activations[-1]
-                        prediction = np.argmax(probabilities)
                         confidence = float(probabilities[0][prediction])
                         
                         # Cache the result
@@ -318,10 +323,10 @@ class PredictionTab(ctk.CTkFrame):
             self.loading_progress.set(0)
             
             # Hide probability displays
-            self.prob_label.grid_remove()
+            self.prob_label.pack_forget()
             for label, bar in zip(self.prob_labels, self.prob_bars):
-                label.grid_remove()
-                bar.grid_remove()
+                label.pack_forget()
+                bar.pack_forget()
                 
             # Create model loading generator
             model_loader = self.controller.model_manager.load_model_async()
@@ -345,9 +350,9 @@ class PredictionTab(ctk.CTkFrame):
             
             # Show probability displays in main thread
             self.after(0, lambda: [
-                self.prob_label.grid(),
-                *[label.grid() for label in self.prob_labels],
-                *[bar.grid() for bar in self.prob_bars]
+                self.prob_label.pack(),
+                *[label.pack() for label in self.prob_labels],
+                *[bar.pack() for bar in self.prob_bars]
             ])
         except Exception as e:
             self.loading_label.configure(text=f"Error: {str(e)}", text_color="red")
