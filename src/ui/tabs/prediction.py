@@ -2,7 +2,7 @@
 Prediction Tab Module - Implements the dedicated prediction interface
 """
 import customtkinter as ctk
-from PIL import Image
+from PIL import Image, ImageOps
 import numpy as np
 import asyncio
 from functools import partial
@@ -10,10 +10,10 @@ import time
 import threading
 import tkinter as tk
 from tkinter import filedialog
+from ..canvas import CanvasManager, DEFAULT_BRUSH_RADIUS
 from ..preview import ImagePreviewFrame
 from utils.prediction import PredictionManager
 from utils.prediction_cache import PredictionCache
-from ..canvas import CanvasManager
 
 class PredictionTab(ctk.CTkFrame):
     """Prediction interface as a Tab"""
@@ -39,52 +39,110 @@ class PredictionTab(ctk.CTkFrame):
         self.confidence_threshold_low = 0.4
         self.confidence_threshold_high = 0.8
         
-        # Initialize canvas
-        self.canvas_manager = CanvasManager(self)
-        self.canvas_manager.stroke_callback = self.on_drawing_update
+        # Canvas manager will be initialized in _create_layout
         
         self._create_layout()
         
     def _create_layout(self):
         """Create the main layout"""
-        # Tab control
-        self.tab_view = ctk.CTkTabview(self)
-        self.tab_view.pack(expand=True, fill="both", padx=10, pady=10)
+        # Main container with left-right split
+        main_container = ctk.CTkFrame(self)
+        main_container.pack(expand=True, fill="both", padx=10, pady=10)
+        
+        # Left side - Predictions and Controls (consistent across tabs)
+        left_frame = ctk.CTkFrame(main_container)
+        left_frame.pack(side="left", fill="y", padx=10, pady=10)
+        
+        # Right side - Tab control for Draw/Import
+        right_frame = ctk.CTkFrame(main_container)
+        right_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
+        
+        # Initialize tab control on right side
+        self.tab_view = ctk.CTkTabview(right_frame)
+        self.tab_view.pack(expand=True, fill="both")
         
         # Create tabs
-        self.draw_tab = self.tab_view.add("Draw")
-        self.import_tab = self.tab_view.add("Import")
+        self.draw_tab = self.tab_view.add("Drawing Input")
+        self.import_tab = self.tab_view.add("Image Import")
         
-        # Left side - Controls and Probability Bars
-        left_frame = ctk.CTkFrame(self.draw_tab)
-        left_frame.pack(side="left", fill="y", padx=10, pady=10)
-
+        # Add canvas to draw tab
+        # Initialize canvas with brush size first
+        self.brush_size = ctk.IntVar(value=DEFAULT_BRUSH_RADIUS)
+        self.canvas_manager = CanvasManager(self.draw_tab, brush_radius_var=self.brush_size)
+        self.canvas_manager.stroke_callback = self.on_drawing_update
+        
+        # Drawing tools frame
+        tools_frame = ctk.CTkFrame(self.draw_tab)
+        tools_frame.pack(fill="x", padx=5, pady=5)
+        
+        # Brush size control
+        brush_label = ctk.CTkLabel(tools_frame, text="Brush Size:")
+        brush_label.pack(side="left", padx=5)
+        
+        brush_slider = ctk.CTkSlider(tools_frame,
+            from_=5, to=30,
+            variable=self.brush_size,
+            width=150)
+        brush_slider.pack(side="left", padx=5)
+        
+        # Tool buttons frame
+        tool_buttons = ctk.CTkFrame(tools_frame, fg_color="transparent")
+        tool_buttons.pack(side="right", padx=5)
+        
+        # Clear button
+        clear_btn = ctk.CTkButton(tool_buttons, text="Clear",
+            command=self._clear_canvas,
+            width=70)
+        clear_btn.pack(side="right", padx=2)
+        
+        # Undo button
+        undo_btn = ctk.CTkButton(tool_buttons, text="Undo",
+            command=self.canvas_manager.undo,
+            width=70)
+        undo_btn.pack(side="right", padx=2)
+        
+        # Drawing instructions
+        instructions = ctk.CTkLabel(self.draw_tab,
+            text="Draw a digit in the canvas below\nRight-click to erase strokes",
+            text_color="gray")
+        instructions.pack(padx=5, pady=5)
+        
+        # Pack the canvas last
+        self.canvas_manager.canvas.pack(expand=True, padx=5, pady=5)
+        # Left side layout - Fixed components
+        left_title = ctk.CTkLabel(left_frame, text="Neural Network Predictions", font=("Arial", 14, "bold"))
+        left_title.pack(padx=5, pady=(0,10))
+        
+        # Model controls section
+        control_section = ctk.CTkFrame(left_frame)
+        control_section.pack(fill="x", padx=5, pady=5)
+        
         # Model loading status
-        self.loading_label = ctk.CTkLabel(left_frame, text="Loading model...", text_color="gray")
+        self.loading_label = ctk.CTkLabel(control_section, text="Loading model...", text_color="gray")
         self.loading_label.pack(padx=5, pady=5)
         
-        self.loading_progress = ctk.CTkProgressBar(left_frame)
-        self.loading_progress.pack(padx=5, pady=(0,10), fill="x")
+        self.loading_progress = ctk.CTkProgressBar(control_section)
+        self.loading_progress.pack(padx=5, pady=(0,5), fill="x")
         self.loading_progress.set(0)
         
         # Model control buttons
-        buttons_frame = ctk.CTkFrame(left_frame)
+        buttons_frame = ctk.CTkFrame(control_section)
         buttons_frame.pack(fill="x", padx=5, pady=5)
         
         self.load_model_btn = ctk.CTkButton(buttons_frame, text="Load Model", command=self._load_model, state="normal")
         self.load_model_btn.pack(side="left", padx=2)
         
-        clear_btn = ctk.CTkButton(buttons_frame, text="Clear", command=self._clear_canvas)
+        clear_btn = ctk.CTkButton(buttons_frame, text="Clear Drawing", command=self._clear_canvas)
         clear_btn.pack(side="right", padx=2)
 
-        # Title for probability section
-        self.prob_label = ctk.CTkLabel(left_frame, text="Prediction Probabilities")
+        # Prediction probabilities section
+        self.prob_label = ctk.CTkLabel(left_frame, text="Prediction Probabilities", font=("Arial", 12, "bold"))
         self.prob_label.pack(padx=5, pady=(15,5))
         self.prob_label.pack_forget()  # Hide until model is loaded
         
         # Create probability bars with improved styling
-        prob_container = ctk.CTkFrame(left_frame)
-        prob_container.pack(fill="x", padx=10, pady=5)
+        prob_container = ctk.CTkFrame(left_frame, fg_color="transparent")
+        prob_container.pack(fill="x", padx=5, pady=5)
         
         self.prob_bars = []
         self.prob_labels = []
@@ -107,42 +165,49 @@ class PredictionTab(ctk.CTkFrame):
             self.prob_bars.append(bar)
             bar.pack_forget()
 
-        # Preview section
-        preview_label = ctk.CTkLabel(left_frame, text="Processed Image")
-        preview_label.pack(padx=5, pady=(15,5))
+        # Preview and history in scrollable section
+        scroll_container = ctk.CTkScrollableFrame(left_frame)
+        scroll_container.pack(fill="both", expand=True, padx=5, pady=(10,5))
         
-        self.preview = ImagePreviewFrame(left_frame)
+        # Preview section
+        preview_label = ctk.CTkLabel(scroll_container, text="Processed Image", font=("Arial", 12, "bold"))
+        preview_label.pack(padx=5, pady=(5,5))
+        
+        self.preview = ImagePreviewFrame(scroll_container)
         self.preview.pack(padx=5, pady=5)
         
         # History section
-        history_label = ctk.CTkLabel(left_frame, text="Recent Predictions")
+        history_label = ctk.CTkLabel(scroll_container, text="Recent Predictions", font=("Arial", 12, "bold"))
         history_label.pack(padx=5, pady=(15,5))
         
-        self.history_frame = ctk.CTkFrame(left_frame)
+        self.history_frame = ctk.CTkFrame(scroll_container)
         self.history_frame.pack(fill="both", expand=True, padx=5, pady=5)
 
-        # Right side - Canvas
-        right_frame = ctk.CTkFrame(self.draw_tab)
-        right_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
-
-        canvas_label = ctk.CTkLabel(right_frame, text="Draw a digit (or use Import tab)")
-        canvas_label.pack(padx=5, pady=5)
         
-        self.canvas_manager.canvas.pack(expand=True, padx=5, pady=5)
-        
-        # Create Import tab content
+        # Import tab content
         import_frame = ctk.CTkFrame(self.import_tab)
         import_frame.pack(expand=True, fill="both", padx=10, pady=10)
         
-        import_label = ctk.CTkLabel(import_frame,
+        import_label = ctk.CTkLabel(
+            import_frame,
             text="Import Image\nSupported formats: PNG, JPEG",
-            font=("Arial", 14))
-        import_label.pack(pady=20)
+            font=("Arial", 14, "bold")
+        )
+        import_label.pack(pady=(20,10))
         
-        import_button = ctk.CTkButton(import_frame,
-            text="Choose MNIST CSV File",
+        # Buttons frame
+        buttons_frame = ctk.CTkFrame(import_frame, fg_color="transparent")
+        buttons_frame.pack(pady=10)
+        
+        import_image_btn = ctk.CTkButton(buttons_frame,
+            text="Choose Image File",
+            command=self._import_image)
+        import_image_btn.pack(side="left", padx=5)
+        
+        import_csv_btn = ctk.CTkButton(buttons_frame,
+            text="Import CSV",
             command=self._import_mnist_csv)
-        import_button.pack(pady=10)
+        import_csv_btn.pack(side="left", padx=5)
 
         # Status label for import
         self.import_status = ctk.CTkLabel(import_frame,
@@ -165,7 +230,7 @@ class PredictionTab(ctk.CTkFrame):
         """Update probability bars with new predictions"""
         for i, prob in enumerate(probabilities[0]):
             self.prob_bars[i].set(float(prob))
-            self.prob_labels[i].configure(text=f"Digit {i}: {prob*100:.1f}%")
+            self.prob_labels[i].configure(text=f"Digit {i}: {prob:.1%}")
             
     def add_to_history(self, image, prediction, confidence):
         """Add a new prediction to the history"""
@@ -416,6 +481,69 @@ class PredictionTab(ctk.CTkFrame):
             )
             thread.daemon = True
             thread.start()
+            
+    def _import_image(self):
+        """Handle image file import"""
+        try:
+            filename = tk.filedialog.askopenfilename(
+                title="Select Image File",
+                filetypes=[
+                    ("Image files", "*.png *.jpg *.jpeg"),
+                    ("All files", "*.*")
+                ]
+            )
+            
+            if not filename:
+                return
+                
+            self._update_import_status("Loading image...", "orange")
+            
+            # Load and process image
+            image = Image.open(filename).convert('L')  # Convert to grayscale
+            processed_image = self._preprocess_imported_image(image)
+            
+            # Show preview and run prediction
+            self.import_preview.display_image(processed_image)
+            if self.is_model_loaded:
+                asyncio.run(self.predict(processed_image))
+                
+            self._update_import_status("Image loaded successfully", "green")
+            
+        except Exception as e:
+            self._update_import_status(f"Error: {str(e)}", "red")
+            
+    def _preprocess_imported_image(self, image):
+        """Preprocess imported image for prediction"""
+        # Resize to MNIST-like format (28x28)
+        target_size = (28, 28)
+        
+        # Calculate dimensions to maintain aspect ratio
+        width, height = image.size
+        aspect = width / height
+        
+        if aspect > 1:
+            new_width = int(target_size[0] * aspect)
+            new_height = target_size[1]
+        else:
+            new_width = target_size[0]
+            new_height = int(target_size[1] / aspect)
+            
+        # Resize and pad to square
+        resized = image.resize((new_width, new_height), Image.LANCZOS)
+        
+        # Create square white background
+        square = Image.new('L', (max(new_width, new_height),) * 2, 'white')
+        
+        # Paste resized image in center
+        x = (square.width - resized.width) // 2
+        y = (square.height - resized.height) // 2
+        square.paste(resized, (x, y))
+        
+        # Final resize to target size
+        final = square.resize(target_size, Image.LANCZOS)
+        
+        # Invert colors to match MNIST format
+        return ImageOps.invert(final)
             
     def _import_mnist_csv(self):
         """Handle MNIST CSV file import"""
