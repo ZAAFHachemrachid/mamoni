@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import csv
+import pandas as pd
 from PIL import Image
 import logging
 
@@ -339,6 +340,98 @@ class ImageDataset:
                 features[i, j] = 255 if non_zero_count > zero_count else 0 # 255 if more gray, 0 if more empty
         return features.flatten()
 
+    def load_from_csv(self, csv_filename):
+        """Load features and labels from a CSV file.
+        
+        The CSV should have feature columns named 'feature_0', 'feature_1', etc.
+        and a 'label' column containing class labels."""
+        try:
+            import pandas as pd
+            
+            # Read CSV file
+            df = pd.read_csv(csv_filename)
+            
+            # Separate features and labels
+            feature_cols = [col for col in df.columns if col.startswith('feature_')]
+            if not feature_cols:
+                raise ValueError("No feature columns found in CSV file. Column names should be 'feature_0', 'feature_1', etc.")
+            
+            if 'label' not in df.columns:
+                raise ValueError("No 'label' column found in CSV file")
+            
+            # Extract features and labels
+            self.features = df[feature_cols].values
+            labels = df['label'].values
+            
+            # Get number of classes from unique labels
+            self.num_classes = len(np.unique(labels))
+            
+            # Convert labels to one-hot encoding
+            self.encoded_labels = np.eye(self.num_classes)[labels]
+            
+            # Calculate standardization parameters
+            self.mean = np.mean(self.features, axis=0)
+            self.std = np.std(self.features, axis=0) + 1e-8
+            
+            # Standardize features
+            self.features = (self.features - self.mean) / self.std
+            
+            print(f"Loaded {len(self.features)} samples with {len(feature_cols)} features from {csv_filename}")
+            print(f"Found {self.num_classes} unique classes")
+            
+        except Exception as e:
+            print(f"Error loading CSV file: {e}")
+            raise
+
+    def load_mnist_csv(self, csv_filename):
+        """Load MNIST dataset from CSV file.
+        
+        The MNIST CSV format is expected to have:
+        - First column: label (0-9)
+        - Remaining columns: 784 pixel values (28x28 flattened image)"""
+        try:
+            # Read CSV file
+            df = pd.read_csv(csv_filename)
+            
+            if len(df.columns) != 785:  # 1 label + 784 pixels
+                raise ValueError("Invalid MNIST CSV format. Expected 785 columns (1 label + 784 pixels)")
+            
+            # First column is label, rest are pixel values
+            labels = df.iloc[:, 0].values
+            pixel_values = df.iloc[:, 1:].values
+            
+            # Reshape pixel values to 28x28 images
+            self.images = [pixels.reshape(28, 28) for pixels in pixel_values]
+            self.labels = labels.tolist()
+            
+            # Process images (resize to 50x50)
+            self.processed_images = []
+            for img in self.images:
+                # Convert to PIL Image for resizing
+                pil_img = Image.fromarray(img.astype('uint8'))
+                resized_img = np.array(pil_img.resize((50, 50), Image.LANCZOS))
+                self.processed_images.append(resized_img)
+            
+            # Store raw features and prepare encoded labels
+            self.features = pixel_values  # Store original 784 features
+            self.num_classes = len(np.unique(labels))
+            self.encoded_labels = np.eye(self.num_classes)[labels]
+            
+            # Calculate standardization parameters
+            self.mean = np.mean(self.features, axis=0)
+            self.std = np.std(self.features, axis=0) + 1e-8
+            
+            # Standardize features
+            self.features = (self.features - self.mean) / self.std
+            
+            print(f"Loaded {len(self.features)} MNIST samples")
+            print(f"Each image is {self.processed_images[0].shape}")
+            print(f"Found {self.num_classes} classes")
+            
+        except Exception as e:
+            print(f"Error loading MNIST CSV file: {e}")
+            raise
+
     def export_to_csv(self, csv_filename):
         """Export features and labels to CSV file for external use."""
         if self.features is None or self.encoded_labels is None:
@@ -396,4 +489,3 @@ class ImageDataset:
         self.test_labels = self.encoded_labels[test_indices]
 
         print(f"Dataset split: Train={len(self.train_features)}, Val={len(self.val_features)}, Test={len(self.test_features)}")
-

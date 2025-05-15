@@ -9,6 +9,7 @@ from functools import partial
 import time
 import threading
 import tkinter as tk
+from tkinter import filedialog
 from ..preview import ImagePreviewFrame
 from utils.prediction import PredictionManager
 from utils.prediction_cache import PredictionCache
@@ -46,8 +47,16 @@ class PredictionTab(ctk.CTkFrame):
         
     def _create_layout(self):
         """Create the main layout"""
+        # Tab control
+        self.tab_view = ctk.CTkTabview(self)
+        self.tab_view.pack(expand=True, fill="both", padx=10, pady=10)
+        
+        # Create tabs
+        self.draw_tab = self.tab_view.add("Draw")
+        self.import_tab = self.tab_view.add("Import")
+        
         # Left side - Controls and Probability Bars
-        left_frame = ctk.CTkFrame(self)
+        left_frame = ctk.CTkFrame(self.draw_tab)
         left_frame.pack(side="left", fill="y", padx=10, pady=10)
 
         # Model loading status
@@ -113,14 +122,40 @@ class PredictionTab(ctk.CTkFrame):
         self.history_frame.pack(fill="both", expand=True, padx=5, pady=5)
 
         # Right side - Canvas
-        right_frame = ctk.CTkFrame(self)
+        right_frame = ctk.CTkFrame(self.draw_tab)
         right_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
 
-        canvas_label = ctk.CTkLabel(right_frame, text="Draw a digit")
+        canvas_label = ctk.CTkLabel(right_frame, text="Draw a digit (or use Import tab)")
         canvas_label.pack(padx=5, pady=5)
         
         self.canvas_manager.canvas.pack(expand=True, padx=5, pady=5)
         
+        # Create Import tab content
+        import_frame = ctk.CTkFrame(self.import_tab)
+        import_frame.pack(expand=True, fill="both", padx=10, pady=10)
+        
+        import_label = ctk.CTkLabel(import_frame,
+            text="Import Image\nSupported formats: PNG, JPEG",
+            font=("Arial", 14))
+        import_label.pack(pady=20)
+        
+        import_button = ctk.CTkButton(import_frame,
+            text="Choose MNIST CSV File",
+            command=self._import_mnist_csv)
+        import_button.pack(pady=10)
+
+        # Status label for import
+        self.import_status = ctk.CTkLabel(import_frame,
+            text="",
+            text_color="gray")
+        self.import_status.pack(pady=5)
+
+        # Preview for imported image
+        preview_label = ctk.CTkLabel(import_frame, text="Preview")
+        preview_label.pack(pady=(20,5))
+        
+        self.import_preview = ImagePreviewFrame(import_frame)
+        self.import_preview.pack(pady=5)
         
         # Initialize prediction manager
         self.prediction_manager = PredictionManager(self, None, self.controller, self.dataset)
@@ -381,3 +416,40 @@ class PredictionTab(ctk.CTkFrame):
             )
             thread.daemon = True
             thread.start()
+            
+    def _import_mnist_csv(self):
+        """Handle MNIST CSV file import"""
+        try:
+            # Open file dialog for CSV selection
+            filename = tk.filedialog.askopenfilename(
+                title="Select MNIST CSV File",
+                filetypes=[("CSV files", "*.csv"), ("All files", "*.*")]
+            )
+            
+            if not filename:
+                return
+                
+            self._update_import_status("Loading CSV file...", "orange")
+            
+            # Load MNIST data
+            self.dataset.load_mnist_csv(filename)
+            
+            if not self.dataset.processed_images:
+                raise ValueError("No valid MNIST images found in CSV file")
+                
+            # Display first image as preview
+            first_image = self.dataset.processed_images[0]
+            self.import_preview.display_image(first_image)
+            
+            # Run prediction on imported image
+            if self.is_model_loaded:
+                asyncio.run(self.predict(first_image))
+                
+            self._update_import_status("CSV file loaded successfully", "green")
+            
+        except Exception as e:
+            self._update_import_status(f"Error: {str(e)}", "red")
+            
+    def _update_import_status(self, message, color):
+        """Update import status display"""
+        self.import_status.configure(text=message, text_color=color)
